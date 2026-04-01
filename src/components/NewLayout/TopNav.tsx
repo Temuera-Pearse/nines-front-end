@@ -1,18 +1,13 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { useRaceStore } from '../../state/raceStore'
+import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 
 const NAV_LINKS = ['Home', 'My Bets', 'Leaderboard', 'Replays', 'How to Play']
 
 export const TopNav: React.FC = () => {
   const [active, setActive] = useState('Home')
-  const { raceId, status } = useRaceStore()
-
-  const statusText = useMemo(() => {
-    if (status === 'running') return 'LIVE RACE'
-    if (status === 'betsOpen') return 'ACCEPTING BETS'
-    if (status === 'finished') return 'RESULTS'
-    return 'CONNECTING'
-  }, [status])
+  const { raceId } = useRaceStore()
+  const headerTiming = useRaceHeaderTiming()
 
   return (
     <nav
@@ -102,7 +97,7 @@ export const TopNav: React.FC = () => {
               STATUS
             </div>
             <div style={{ color: '#fff', fontWeight: 900, fontSize: '14px' }}>
-              {statusText}
+              {headerTiming.navStatusText}
             </div>
           </div>
         </div>
@@ -141,7 +136,7 @@ export const TopNav: React.FC = () => {
             letterSpacing: '1px',
           }}
         >
-          {statusText}
+          {headerTiming.navStatusText}
         </span>
       </div>
 

@@ -18,6 +18,15 @@ export interface RaceCurrentResponse {
 
 export interface RaceResultsResponse {
   raceId: string
+  timestampUtc?: string
+  winnerId?: string
+  finishOrder?: string[]
+  finishTimesMs?: Record<string, number>
+  finishTickIndex?: Record<string, number>
+  presentation?: {
+    bannerVisibleUntilUtc?: string
+    resultsVisibleUntilUtc?: string
+  }
   winner?: string
   placements?: string[]
   [key: string]: unknown

@@ -1,17 +1,32 @@
 .race-track {
   position: relative;
   width: 100%;
+  height: 100%;
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   border-radius: 18px;
-  padding-top: 92px;
+  padding-top: 118px;
   box-shadow:
     0 24px 64px rgba(79, 142, 247, 0.2),
     0 8px 24px rgba(0, 0, 0, 0.12);
   min-height: 520px;
   border: 3px solid rgba(255, 255, 255, 0.92);
   overflow: hidden;
+}
+
+.race-track--finish-animate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.34),
+    transparent 58%
+  );
+  animation: finish-flash 700ms ease-out;
 }
 
 .race-track-vignette {
@@ -53,6 +68,43 @@
     border-color 0.4s;
 }
 
+.event-banner {
+  position: relative;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 8px 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.24);
+}
+
+.start-banner {
+  position: relative;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 10px 12px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(234, 179, 8, 0.96),
+    rgba(249, 115, 22, 0.96)
+  );
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.28);
+  animation: start-banner-enter 320ms ease-out;
+}
+
 .leader-dot {
   width: 8px;
   height: 8px;
@@ -86,12 +138,12 @@
   background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
-.finish-line {
+.lane-marker {
   position: absolute;
-  right: 20px;
-  top: 126px;
+  top: 0;
   bottom: 0;
   width: 2px;
+  pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,
     #000 0px,
@@ -100,15 +152,43 @@
     #fff 10px
   );
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  font-weight: bold;
-  font-size: 6px;
-  color: #000;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  padding: 5px 0;
   z-index: 2;
+}
+
+.lane-marker span {
+  position: absolute;
+  top: -16px;
+  transform: translateX(-50%);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgba(15, 23, 42, 0.92);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  padding: 2px 6px;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
+}
+
+.lane-marker--start {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.76) 0px,
+    rgba(15, 23, 42, 0.76) 5px,
+    rgba(255, 255, 255, 0.78) 5px,
+    rgba(255, 255, 255, 0.78) 10px
+  );
+}
+
+.lane-marker--finish {
+  background: repeating-linear-gradient(
+    to bottom,
+    #000 0px,
+    #000 5px,
+    #fff 5px,
+    #fff 10px
+  );
 }
 
 .race-lane {
@@ -121,35 +201,43 @@
   z-index: 1;
 }
 
+.race-lane--winner {
+  background: linear-gradient(
+    to right,
+    rgba(255, 223, 93, 0.2),
+    rgba(255, 255, 255, 0.1)
+  );
+}
+
 .race-lane-0 {
-  top: 39px;
+  top: 136px;
 }
 .race-lane-1 {
-  top: 32px;
+  top: 124px;
 }
 .race-lane-2 {
-  top: 25px;
+  top: 112px;
 }
 .race-lane-3 {
-  top: 18px;
+  top: 100px;
 }
 .race-lane-4 {
-  top: 11px;
+  top: 88px;
 }
 .race-lane-5 {
-  top: 4px;
+  top: 76px;
 }
 .race-lane-6 {
-  top: -3px;
+  top: 64px;
 }
 .race-lane-7 {
-  top: -10px;
+  top: 52px;
 }
 .race-lane-8 {
-  top: -17px;
+  top: 40px;
 }
 .race-lane-9 {
-  top: -24px;
+  top: 28px;
 }
 
 .lane-label {
@@ -164,7 +252,7 @@
 
 .lane-track {
   flex: 1;
-  height: 34px;
+  height: 44px;
   position: relative;
   overflow: hidden;
   padding-right: 28px;
@@ -183,6 +271,10 @@
   min-width: 280px;
   padding: 10px 26px;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.35);
+}
+
+.winner-banner--pop {
+  animation: winner-pop 700ms cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 .winner-kicker {
@@ -204,4 +296,42 @@
 
 .confetti-piece {
   background: linear-gradient(135deg, #ff4757, #ffd700);
+}
+
+@keyframes finish-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes winner-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px) scale(0.92);
+  }
+  65% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes start-banner-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -1,13 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useRaceStore } from './state/raceStore'
+import React, { useEffect, useState } from 'react'
+import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
 import { getRaceConfig, getRaceCurrent, getRaceResults } from './api/race'
 import { OFFLINE_MODE } from './config/runtime'
 import { TopNav } from './components/NewLayout/TopNav'
 import { CompactRaceInfo } from './components/NewLayout/CompactRaceInfo'
+import { OnTrackEventsCard } from './components/NewLayout/OnTrackEventsCard'
 import { ParimutuelPanel } from './components/NewLayout/ParimutuelPanel'
 import { BottomWidgets } from './components/NewLayout/BottomWidgets'
 import { RaceTrack } from './components/RaceTrack/RaceTrack'
+import { ResultsPanel } from './components/ResultsPanel/ResultsPanel'
+import { useRaceLifecycle } from './state/useRaceLifecycle'
+import {
+  selectResultsStandings,
+  selectResultsWinner,
+} from './state/raceSelectors'
 
 /**
  * Derive the visible page from wall-clock UTC seconds.
@@ -20,6 +27,14 @@ function utcPagePhase(sec: number): 'track' {
 function App() {
   const status = useRaceStore((s) => s.status)
   const raceId = useRaceStore((s) => s.raceId)
+  const resultsWinner = useRaceStore(selectResultsWinner)
+  const resultsStandings = useRaceStore(selectResultsStandings)
+  const {
+    showFinishAnimation,
+    showResultsPanel,
+    resultsCountdownSeconds,
+    completeResultsPhase,
+  } = useRaceLifecycle()
 
   // Drive page visibility from UTC clock so layout matches the backend cycle exactly.
   const [clockSec, setClockSec] = useState(() => new Date().getUTCSeconds())
@@ -27,21 +42,6 @@ function App() {
     const id = setInterval(() => setClockSec(new Date().getUTCSeconds()), 100)
     return () => clearInterval(id)
   }, [])
-
-  // Reset all horse positions to 0 whenever the minute wraps (:59 → :00).
-  // This lives in App (not RacePage) so the ref persists across page transitions.
-  const prevClockSecRef = useRef<number>(clockSec)
-  useEffect(() => {
-    const prev = prevClockSecRef.current
-    // Detect wrap: previous second was in the second half, new second is near zero
-    if (prev > 50 && clockSec <= 5) {
-      const { horses, setHorses } = useRaceStore.getState()
-      if (horses.length > 0) {
-        setHorses(horses.map((h) => ({ ...h, position: 0 })))
-      }
-    }
-    prevClockSecRef.current = clockSec
-  }, [clockSec])
 
   useEffect(() => {
     let cancelled = false
@@ -56,8 +56,8 @@ function App() {
           })),
         )
       }
-      if (store.status === 'idle') {
-        store.setStatus('betsOpen')
+      if (store.status === RaceStatus.IDLE) {
+        store.setStatus(RaceStatus.BETS_OPEN)
       }
     }
 
@@ -88,25 +88,46 @@ function App() {
         const end = typeof current.endTime === 'string' ? current.endTime : ''
 
         if (end) {
-          store.setRaceEndUtc(end)
-          store.setStatus('finished')
           try {
             const results = await getRaceResults(current.raceId)
-            // Backend may return either winner/placements or winnerId/finishOrder
-            const w = results.winner ?? (results as any).winnerId
-            const p = results.placements ?? (results as any).finishOrder
-            if (!cancelled && w && Array.isArray(p)) {
-              store.setWinner(w as string, p as string[])
+            if (!cancelled) {
+              store.handleRaceFinish({
+                raceId: current.raceId,
+                timestampUtc:
+                  typeof results.timestampUtc === 'string'
+                    ? results.timestampUtc
+                    : end,
+                winnerId:
+                  typeof results.winnerId === 'string'
+                    ? results.winnerId
+                    : typeof results.winner === 'string'
+                      ? results.winner
+                      : undefined,
+                finishOrder: Array.isArray(results.finishOrder)
+                  ? results.finishOrder
+                  : Array.isArray(results.placements)
+                    ? results.placements
+                    : undefined,
+                finishTimesMs: results.finishTimesMs,
+                finishTickIndex: results.finishTickIndex,
+                presentation: results.presentation,
+              })
             }
           } catch {
-            // Results may not exist; keep UI usable.
+            if (!cancelled) {
+              store.handleRaceFinish({
+                raceId: current.raceId,
+                timestampUtc: end,
+              })
+            }
           }
         } else if (start) {
           store.setRaceStartUtc(start)
-          store.setStatus('running')
-        } else if (useRaceStore.getState().status === 'idle') {
+          store.setInterpolationEnabled(true)
+          store.setStatus(RaceStatus.RUNNING)
+        } else if (useRaceStore.getState().status === RaceStatus.IDLE) {
           // If backend doesn't provide phase timestamps, default to betsOpen.
-          store.setStatus('betsOpen')
+          store.setStatus(RaceStatus.BETS_OPEN)
         }
 
         if (useRaceStore.getState().horses.length === 0) {
@@ -136,11 +157,13 @@ function App() {
 
   // Track the current page key so we can re-trigger the fade on phase change
   const pagePhase =
-    !raceId && status === 'idle' ? 'connecting' : utcPagePhase(clockSec)
+    !raceId && status === RaceStatus.IDLE
+      ? 'connecting'
+      : utcPagePhase(clockSec)
 
   const renderPage = () => {
     // If we have no race data yet, show the connecting screen
-    if (!raceId && status === 'idle') {
+    if (!raceId && status === RaceStatus.IDLE) {
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -236,11 +259,67 @@ function App() {
                 flexDirection: 'column',
                 gap: '8px',
                 overflow: 'hidden',
+                position: 'relative',
               }}
             >
-              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                <RaceTrack />
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  gap: '10px',
+                }}
+              >
+                <div
+                  style={{
+                    flex: '0 0 345px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: 0,
+                    minHeight: 0,
+                    height: '100%',
+                    maxHeight: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <OnTrackEventsCard />
+                </div>
+
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    minHeight: 0,
+                    height: '100%',
+                    maxHeight: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <RaceTrack showFinishAnimation={showFinishAnimation} />
+                </div>
               </div>
+              {showResultsPanel && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '12px 12px 96px 367px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 30,
+                    pointerEvents: 'auto',
+                  }}
+                >
+                  <ResultsPanel
+                    isVisible={showResultsPanel}
+                    winner={resultsWinner}
+                    standings={resultsStandings}
+                    nextRaceStartsInSeconds={resultsCountdownSeconds}
+                    onComplete={completeResultsPhase}
+                  />
+                </div>
+              )}
               <BottomWidgets />
             </div>
 

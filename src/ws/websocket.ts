@@ -1,4 +1,12 @@
-import { useRaceStore } from '../state/raceStore'
+import {
+  RaceStatus,
+  type BackendRaceResult,
+  type HorseEffectState,
+  type RaceFinishPresentation,
+  type RaceEventRecord,
+  type RaceWinnerDeclaredPayload,
+  useRaceStore,
+} from '../state/raceStore'
 import { OFFLINE_MODE, WS_URL } from '../config/runtime'
 
 type EventType =
@@ -6,6 +14,7 @@ type EventType =
   | 'bets:close'
   | 'race:info'
   | 'race:start'
+  | 'race:winner-declared'
   | 'race:tick'
   | 'race:keyframe'
   | 'race:delta'
@@ -38,6 +47,18 @@ interface RaceFrame {
   data?: {
     positions?: number[]
     deltas?: number[]
+    events?: Array<{
+      id?: string
+      instanceId?: string
+      tickIndex?: number
+      affectedHorseIds?: string[]
+    }>
+    effects?: Array<{
+      horseId?: string
+      activeEventIds?: string[]
+      isStunned?: boolean
+      isRemoved?: boolean
+    }>
     [key: string]: unknown
   }
   [key: string]: unknown
@@ -66,8 +87,17 @@ interface RaceFinishMsg {
   protoVer?: number
   raceId: string
   timestampUtc?: string
+  results?: BackendRaceResult[]
   winnerId?: string
   finishOrder?: string[]
+  finishTimesMs?: Record<string, number>
+  finishTickIndex?: Record<string, number>
+  presentation?: RaceFinishPresentation
+}
+
+interface RaceWinnerDeclaredMsg extends RaceWinnerDeclaredPayload {
+  type: 'race:winner-declared'
+  protoVer?: number
 }
 
 interface RaceCatchupMsg {
@@ -147,6 +177,12 @@ class WebSocketService {
             }
             if (data.type === 'race:catchup') {
               this.handleRaceCatchup(data as unknown as RaceCatchupMsg)
+              return
+            }
+            if (data.type === 'race:winner-declared') {
+              this.handleWinnerDeclared(
+                data as unknown as RaceWinnerDeclaredMsg,
+              )
               return
             }
             if (data.type === 'race:sync-complete') {
@@ -293,24 +329,19 @@ class WebSocketService {
     if (msg.timestampUtc) {
       store.setRaceStartUtc(msg.timestampUtc)
     }
-    if (store.status !== 'running') store.setStatus('running')
+    store.clearLiveRaceVisuals()
+    store.setInterpolationEnabled(true)
+    if (store.status !== RaceStatus.RUNNING) store.setStatus(RaceStatus.RUNNING)
   }
 
   private handleRaceFinish(msg: RaceFinishMsg) {
-    console.log('[WebSocket] Received race:finish:', msg)
-    console.log(
-      'Winner ID:',
-      msg.winnerId,
-      'First in finishOrder:',
-      msg.finishOrder?.[0],
-    )
     const store = useRaceStore.getState()
-    store.setRaceId(msg.raceId)
-    if (msg.timestampUtc) store.setRaceEndUtc(msg.timestampUtc)
-    store.setStatus('finished')
-    if (msg.winnerId && Array.isArray(msg.finishOrder)) {
-      store.setWinner(msg.winnerId, msg.finishOrder)
-    }
+    store.handleRaceFinish(msg)
+  }
+
+  private handleWinnerDeclared(msg: RaceWinnerDeclaredMsg) {
+    const store = useRaceStore.getState()
+    store.handleWinnerDeclared(msg)
   }
 
   private handleRaceCatchup(msg: RaceCatchupMsg) {
@@ -337,6 +368,14 @@ class WebSocketService {
   private handleRaceFrame(frame: RaceFrame) {
     const store = useRaceStore.getState()
 
+    if (
+      !store.interpolationEnabled ||
+      store.status === RaceStatus.FINISHED ||
+      store.status === RaceStatus.RESULTS
+    ) {
+      return
+    }
+
     // Drop frames for a different raceId (can happen with in-flight messages
     // during cycle boundaries or reconnects).
     if (store.raceId && frame.raceId && store.raceId !== frame.raceId) {
@@ -351,6 +390,8 @@ class WebSocketService {
     if (typeof frame.raceId === 'string' && frame.raceId) {
       store.setRaceId(frame.raceId)
     }
+
+    this.applyLiveTickDetails(frame)
 
     const positions = frame.data?.positions
     const deltas = frame.data?.deltas
@@ -400,9 +441,55 @@ class WebSocketService {
     }
     if (Object.keys(out).length > 0) {
       store.updatePositions(out)
-      if (store.status !== 'running' && store.status !== 'finished') {
-        store.setStatus('running')
+      if (
+        store.status !== RaceStatus.RUNNING &&
+        store.status !== RaceStatus.FINISHED &&
+        store.status !== RaceStatus.RESULTS
+      ) {
+        store.setStatus(RaceStatus.RUNNING)
       }
+    }
+  }
+
+  private applyLiveTickDetails(frame: RaceFrame) {
+    const rawEvents = frame.data?.events
+    const rawEffects = frame.data?.effects
+
+    const events: RaceEventRecord[] | undefined = Array.isArray(rawEvents)
+      ? rawEvents
+          .filter((event): event is NonNullable<typeof event> =>
+            Boolean(event?.id && event?.instanceId),
+          )
+          .map((event) => ({
+            eventId: event.id!,
+            instanceId: event.instanceId!,
+            tickIndex:
+              typeof event.tickIndex === 'number'
+                ? event.tickIndex
+                : frame.tickIndex,
+            affectedHorseIds: Array.isArray(event.affectedHorseIds)
+              ? event.affectedHorseIds.filter(Boolean)
+              : [],
+          }))
+      : undefined
+
+    const effects: HorseEffectState[] | undefined = Array.isArray(rawEffects)
+      ? rawEffects
+          .filter((effect): effect is NonNullable<typeof effect> =>
+            Boolean(effect?.horseId),
+          )
+          .map((effect) => ({
+            horseId: effect.horseId!,
+            activeEventIds: Array.isArray(effect.activeEventIds)
+              ? effect.activeEventIds.filter(Boolean)
+              : [],
+            isStunned: effect.isStunned === true,
+            isRemoved: effect.isRemoved === true,
+          }))
+      : undefined
+
+    if (events || effects) {
+      useRaceStore.getState().applyLiveTickDetails(events, effects)
     }
   }
 
@@ -429,6 +516,7 @@ class WebSocketService {
         tickIndex?: number
         tickTs?: number
         protoVer?: number
+        data?: RaceFrame['data']
       }
       if (header.type !== 'race:tick' || !header.raceId) return
       if (bodyBytes.byteLength % 4 !== 0) return
@@ -447,7 +535,7 @@ class WebSocketService {
         seq: header.seq,
         tickIndex: typeof header.tickIndex === 'number' ? header.tickIndex : 0,
         tickTs: header.tickTs,
-        data: { positions },
+        data: { ...header.data, positions },
       }
       this.handleRaceFrame(frame)
     } catch {
@@ -461,7 +549,8 @@ class WebSocketService {
     switch (data.type) {
       case 'bets:open':
         store.setRaceId(data.raceId)
-        store.setStatus('betsOpen')
+        store.setStatus(RaceStatus.BETS_OPEN)
+        store.setInterpolationEnabled(true)
         store.setBetsOpenAtUtc(data.timestampUtc)
         if (data.betsCloseAtUtc) {
           store.setBetsCloseAtUtc(data.betsCloseAtUtc)
@@ -473,7 +562,7 @@ class WebSocketService {
         break
 
       case 'bets:close':
-        store.setStatus('betsClosed')
+        store.setStatus(RaceStatus.BETS_CLOSED)
         store.setBetsCloseAtUtc(data.timestampUtc)
         if (data.raceStartUtc) {
           store.setRaceStartUtc(data.raceStartUtc)
@@ -481,7 +570,8 @@ class WebSocketService {
         break
 
       case 'race:start':
-        store.setStatus('running')
+        store.setStatus(RaceStatus.RUNNING)
+        store.setInterpolationEnabled(true)
         store.setRaceStartUtc(data.timestampUtc)
         break
 
@@ -492,11 +582,26 @@ class WebSocketService {
         break
 
       case 'race:finish':
-        store.setStatus('finished')
-        store.setRaceEndUtc(data.timestampUtc)
-        if (data.winner && data.placements) {
-          store.setWinner(data.winner, data.placements)
-        }
+        store.handleRaceFinish({
+          raceId: data.raceId,
+          timestampUtc: data.timestampUtc,
+          winnerId: typeof data.winner === 'string' ? data.winner : undefined,
+          finishOrder: Array.isArray(data.placements)
+            ? data.placements.filter(
+                (placement): placement is string =>
+                  typeof placement === 'string',
+              )
+            : undefined,
+        })
+        break
+
+      case 'race:winner-declared':
+        store.handleWinnerDeclared({
+          raceId: data.raceId,
+          timestampUtc: data.timestampUtc,
+          winnerId:
+            typeof data.winnerId === 'string' ? data.winnerId : undefined,
+        })
         break
 
       case 'race:reset':

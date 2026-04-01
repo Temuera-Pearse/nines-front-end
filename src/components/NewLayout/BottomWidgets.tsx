@@ -1,14 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { useBetStore } from '../../state/betStore'
 import { useRaceStore } from '../../state/raceStore'
 import { getHorseIdentity } from '../../utils/raceHelpers'
-
-const FEED = [
-  '💸 Big wager landed on lane 2',
-  '🔥 Leader changed near midpoint',
-  '⭐ Late money entering the pool',
-  '⚡ Sprint boost triggered on lane 4',
-]
 
 const Card: React.FC<{
   title: string
@@ -42,12 +35,6 @@ const Card: React.FC<{
 export const BottomWidgets: React.FC = () => {
   const { selectedHorse, amount } = useBetStore()
   const { winner, lastResult, status } = useRaceStore()
-  const [idx, setIdx] = useState(0)
-
-  useEffect(() => {
-    const t = setInterval(() => setIdx((v) => (v + 1) % FEED.length), 2800)
-    return () => clearInterval(t)
-  }, [])
 
   const winnerIdentity = useMemo(() => {
     const id = winner ?? lastResult?.winner
@@ -58,7 +45,7 @@ export const BottomWidgets: React.FC = () => {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr',
         gap: '10px',
         flexShrink: 0,
       }}
@@ -85,22 +72,6 @@ export const BottomWidgets: React.FC = () => {
             Select a horse to place a bet.
           </div>
         )}
-      </Card>
-
-      <Card
-        title="📣 Market Activity"
-        headerBg="linear-gradient(135deg, #a855f7, #6c63ff)"
-      >
-        <div
-          style={{
-            color: '#1e293b',
-            fontWeight: 700,
-            fontSize: '12px',
-            minHeight: '20px',
-          }}
-        >
-          {FEED[idx]}
-        </div>
       </Card>
 
       <Card

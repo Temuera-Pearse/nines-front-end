@@ -1,20 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { useRaceStore } from '../../state/raceStore'
-
-function useClockMs() {
-  const [ms, setMs] = useState(() => {
-    const now = new Date()
-    return now.getUTCSeconds() * 1000 + now.getUTCMilliseconds()
-  })
-  useEffect(() => {
-    const id = setInterval(() => {
-      const now = new Date()
-      setMs(now.getUTCSeconds() * 1000 + now.getUTCMilliseconds())
-    }, 50)
-    return () => clearInterval(id)
-  }, [])
-  return ms
-}
+import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 
 const Stat: React.FC<{
   label: string
@@ -40,26 +26,13 @@ const Stat: React.FC<{
 )
 
 export const CompactRaceInfo: React.FC = () => {
-  const { raceId, status, horses } = useRaceStore()
-  const clockMs = useClockMs()
+  const { raceId, horses } = useRaceStore()
+  const headerTiming = useRaceHeaderTiming()
 
-  const msUntil30 =
-    clockMs <= 30_000 ? 30_000 - clockMs : 60_000 - clockMs + 30_000
-  const racingActive = status === 'running'
-  const totalPool =
-    24000 + horses.reduce((acc, h) => acc + Math.round(h.position), 0)
+  const runnerCount = horses.length > 0 ? horses.length : 10
+  const totalPool = 0
   const housePct = 15
   const netPool = Math.round(totalPool * (1 - housePct / 100))
-
-  const mm = String(Math.floor(msUntil30 / 1000 / 60)).padStart(2, '0')
-  const ss = String(Math.floor(msUntil30 / 1000) % 60).padStart(2, '0')
-
-  const pulseLabel = useMemo(() => {
-    if (racingActive) return 'RACE IN PROGRESS'
-    if (status === 'betsOpen') return 'ACCEPTING BETS'
-    if (status === 'finished') return 'RACE COMPLETE'
-    return 'SYNCING'
-  }, [racingActive, status])
 
   return (
     <div
@@ -106,7 +79,7 @@ export const CompactRaceInfo: React.FC = () => {
             </span>
           </div>
           <span style={{ color: '#64748b', fontWeight: 700, fontSize: '12px' }}>
-            🏟️ Sunridge Downs · 1000m · {Math.max(horses.length, 1)} Runners
+            {runnerCount} Runners
           </span>
         </div>
 
@@ -120,12 +93,12 @@ export const CompactRaceInfo: React.FC = () => {
           }}
         >
           <span style={{ color: '#94a3b8', fontWeight: 700, fontSize: '11px' }}>
-            {racingActive ? 'RACING' : 'STARTS IN'}
+            {headerTiming.timerLabel}
           </span>
-          {racingActive ? (
+          {headerTiming.isLive ? (
             <span
               style={{
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                background: headerTiming.accent,
                 color: '#fff',
                 fontWeight: 900,
                 fontSize: '14px',
@@ -134,15 +107,12 @@ export const CompactRaceInfo: React.FC = () => {
                 boxShadow: '0 2px 0 #15803d',
               }}
             >
-              🏁 LIVE
+              RACING LIVE
             </span>
           ) : (
             <span
               style={{
-                background:
-                  msUntil30 <= 10_000
-                    ? 'linear-gradient(135deg, #ff4757, #ff6b81)'
-                    : 'linear-gradient(135deg, #4f8ef7, #6c63ff)',
+                background: headerTiming.accent,
                 color: '#fff',
                 fontWeight: 900,
                 fontSize: '22px',
@@ -150,7 +120,7 @@ export const CompactRaceInfo: React.FC = () => {
                 padding: '4px 14px',
               }}
             >
-              {mm}:{ss}
+              {headerTiming.timerValue}
             </span>
           )}
         </div>
@@ -178,7 +148,7 @@ export const CompactRaceInfo: React.FC = () => {
             color="#22c55e"
             big
           />
-          <Stat label="STATE" value={status.toUpperCase()} color="#a855f7" />
+          <Stat label="STATE" value={headerTiming.stateLabel} color="#a855f7" />
         </div>
 
         <div
@@ -194,21 +164,19 @@ export const CompactRaceInfo: React.FC = () => {
               width: '10px',
               height: '10px',
               borderRadius: '50%',
-              background: racingActive ? '#22c55e' : '#f97316',
-              boxShadow: racingActive
-                ? '0 0 0 3px rgba(34,197,94,0.25)'
-                : '0 0 0 3px rgba(249,115,22,0.25)',
+              background: headerTiming.pulseColor,
+              boxShadow: `0 0 0 3px ${headerTiming.pulseColor}40`,
               animation: 'cpulse 1.4s infinite',
             }}
           />
           <span
             style={{
-              color: racingActive ? '#22c55e' : '#f97316',
+              color: headerTiming.pulseColor,
               fontWeight: 800,
               fontSize: '12px',
             }}
           >
-            {pulseLabel}
+            {headerTiming.stateLabel}
           </span>
         </div>
       </div>

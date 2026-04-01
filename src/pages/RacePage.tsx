@@ -4,6 +4,7 @@ import { RaceTrack } from '../components/RaceTrack/RaceTrack'
 import { Leaderboard } from '../components/Leaderboard/Leaderboard'
 import { Card } from '../components/UI/Card'
 import { getHorseIdentity } from '../utils/raceHelpers'
+import { useRaceLifecycle } from '../state/useRaceLifecycle'
 
 function useClockMs() {
   const [ms, setMs] = useState(() => {
@@ -23,6 +24,7 @@ function useClockMs() {
 export const RacePage: React.FC = () => {
   const { raceId, horses, winner, placements, lastResult, status } =
     useRaceStore()
+  const { showFinishAnimation } = useRaceLifecycle()
   const clockMs = useClockMs()
   const clockSec = Math.floor(clockMs / 1000)
 
@@ -267,7 +269,7 @@ export const RacePage: React.FC = () => {
         {/* Track — takes most of the width */}
         <div className="flex-1 min-w-0">
           <Card className="p-0">
-            <RaceTrack />
+            <RaceTrack showFinishAnimation={showFinishAnimation} />
           </Card>
         </div>
 

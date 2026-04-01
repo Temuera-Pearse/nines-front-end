@@ -6,7 +6,7 @@
 
 .horse {
   position: absolute;
-  top: 50%;
+  top: 61%;
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
@@ -18,6 +18,15 @@
   /* NO css transition — rAF handles smoothing */
   will-change: left;
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.horse--stunned {
+  filter: saturate(0.6);
+}
+
+.horse--removed {
+  opacity: 0.42;
+  filter: grayscale(0.8);
 }
 
 .horse-icon {
@@ -38,4 +47,22 @@
   border-radius: 2px;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.horse-effect {
+  position: absolute;
+  top: -19px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.86);
+  padding: 1px 3px;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

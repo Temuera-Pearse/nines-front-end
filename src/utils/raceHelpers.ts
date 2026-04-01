@@ -1,4 +1,13 @@
-const DEFAULT_TRACK_LENGTH_METERS = 1000
+export const VISUAL_TRACK_LENGTH_METERS = 1400
+export const VISUAL_START_LINE_METERS = 200
+export const OFFICIAL_RACE_DISTANCE_METERS = 1000
+export const VISUAL_FINISH_LINE_METERS =
+  VISUAL_START_LINE_METERS + OFFICIAL_RACE_DISTANCE_METERS
+export const VISUAL_RUNOFF_DISTANCE_METERS =
+  VISUAL_TRACK_LENGTH_METERS - VISUAL_FINISH_LINE_METERS
+export const VISUAL_OFFSCREEN_OVERSHOOT_METERS = 60
+
+const DEFAULT_TRACK_LENGTH_METERS = OFFICIAL_RACE_DISTANCE_METERS
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
@@ -11,6 +20,33 @@ export interface HorseIdentity {
   name: string
   hex: string // primary colour as a hex string
   tailwind: string // Tailwind bg- class (kept for places that already use it)
+}
+
+interface RaceEventIdentity {
+  label: string
+}
+
+const RACE_EVENT_IDENTITIES: Record<string, RaceEventIdentity> = {
+  hook_shot: { label: 'Hook Shot' },
+  bomb_throw: { label: 'Bomb Throw' },
+  position_swap: { label: 'Position Swap' },
+  samurai_duel: { label: 'Samurai Duel' },
+  smg_attack: { label: 'SMG Attack' },
+  summon_lightning_strike: { label: 'Summon Lightning' },
+  aerial_duel: { label: 'Aerial Duel' },
+  ice_patch: { label: 'Ice Patch' },
+  earthquake: { label: 'Earthquake' },
+  tidal_wave: { label: 'Tidal Wave' },
+  lightning_strike: { label: 'Lightning Strike' },
+  meteor_strike: { label: 'Meteor Strike' },
+  tornado: { label: 'Tornado' },
+  rocket_boost: { label: 'Rocket Boost' },
+  temporary_shield: { label: 'Temporary Shield' },
+  magnet_pull: { label: 'Magnet Pull' },
+  ufo_abduction: { label: 'UFO Abduction' },
+  chain_reaction: { label: 'Chain Reaction' },
+  chain_stun: { label: 'Chain Stun' },
+  luck_charm: { label: 'Luck Charm' },
 }
 
 export const HORSE_IDENTITIES: HorseIdentity[] = [
@@ -45,6 +81,31 @@ export function getHorseIdentity(horseId: string): HorseIdentity {
   ]
 }
 
+export function getRaceEventLabel(eventId: string): string {
+  return RACE_EVENT_IDENTITIES[eventId]?.label ?? eventId.replace(/_/g, ' ')
+}
+
+export function describeRaceEvent(
+  eventId: string,
+  affectedHorseIds: string[] = [],
+): string {
+  const label = getRaceEventLabel(eventId)
+
+  if (affectedHorseIds.length === 1) {
+    return `${getHorseName(affectedHorseIds[0])}: ${label}`
+  }
+
+  if (affectedHorseIds.length === 2) {
+    return `${label} on ${affectedHorseIds.map(getHorseName).join(' and ')}`
+  }
+
+  if (affectedHorseIds.length > 2) {
+    return `${label} across ${affectedHorseIds.length} horses`
+  }
+
+  return `${label} triggered`
+}
+
 /**
  * Backend positions are in meters (0..trackLength). Convert to 0..100%.
  */
@@ -52,18 +113,49 @@ export function positionToPercentage(
   positionMeters: number,
   trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
 ): number {
-  if (!Number.isFinite(positionMeters) || positionMeters <= 0) return 0
+  const startProgress =
+    (VISUAL_START_LINE_METERS / VISUAL_TRACK_LENGTH_METERS) * 100
+  if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
+    return startProgress
+  }
   if (!Number.isFinite(trackLengthMeters) || trackLengthMeters <= 0) return 0
-  return clamp((positionMeters / trackLengthMeters) * 100, 0, 100)
+
+  const visualFinishMeters = VISUAL_START_LINE_METERS + trackLengthMeters
+  const maxVisualMeters =
+    visualFinishMeters +
+    VISUAL_RUNOFF_DISTANCE_METERS +
+    VISUAL_OFFSCREEN_OVERSHOOT_METERS
+  const visualMeters = clamp(
+    VISUAL_START_LINE_METERS + positionMeters,
+    VISUAL_START_LINE_METERS,
+    maxVisualMeters,
+  )
+
+  return clamp((visualMeters / VISUAL_TRACK_LENGTH_METERS) * 100, 0, 110)
 }
 
 export function positionToProgress(
   positionMeters: number,
   trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
 ): number {
-  if (!Number.isFinite(positionMeters) || positionMeters <= 0) return 0
+  const startProgress = VISUAL_START_LINE_METERS / VISUAL_TRACK_LENGTH_METERS
+  if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
+    return startProgress
+  }
   if (!Number.isFinite(trackLengthMeters) || trackLengthMeters <= 0) return 0
-  return clamp(positionMeters / trackLengthMeters, 0, 1)
+
+  const visualFinishMeters = VISUAL_START_LINE_METERS + trackLengthMeters
+  const maxVisualMeters =
+    visualFinishMeters +
+    VISUAL_RUNOFF_DISTANCE_METERS +
+    VISUAL_OFFSCREEN_OVERSHOOT_METERS
+  const visualMeters = clamp(
+    VISUAL_START_LINE_METERS + positionMeters,
+    VISUAL_START_LINE_METERS,
+    maxVisualMeters,
+  )
+
+  return clamp(visualMeters / VISUAL_TRACK_LENGTH_METERS, 0, 1.1)
 }
 
 export function getHorseColor(horseId: string): string {
