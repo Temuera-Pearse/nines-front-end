@@ -1,0 +1,309 @@
+.nines-header-shell {
+  position: relative;
+  z-index: 60;
+  padding: 18px 20px 12px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(235, 244, 255, 0.96),
+      rgba(235, 249, 242, 0.9)
+    ),
+    radial-gradient(
+      circle at top left,
+      rgba(244, 182, 42, 0.22),
+      transparent 42%
+    );
+}
+
+.nines-header-frame {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(
+    135deg,
+    rgba(7, 20, 43, 0.96),
+    rgba(12, 36, 68, 0.92)
+  );
+  box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.nines-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nines-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.nines-logo-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffd54a, #ff8f2f);
+  color: #10213f;
+  font-size: 22px;
+  font-weight: 900;
+  box-shadow: 0 10px 20px rgba(255, 165, 0, 0.28);
+}
+
+.nines-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nines-logo-wordmark {
+  color: #f8fafc;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  line-height: 1;
+}
+
+.nines-logo-subtitle {
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nines-header-button,
+.nines-header-menu-button,
+.nines-header-avatar {
+  border: 0;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.nines-header-button:hover,
+.nines-header-menu-button:hover,
+.nines-header-avatar:hover {
+  transform: translateY(-1px);
+}
+
+.nines-header-button:focus-visible,
+.nines-header-menu-button:focus-visible,
+.nines-header-avatar:focus-visible,
+.nines-dropdown-item:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.8);
+  outline-offset: 2px;
+}
+
+.nines-header-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.nines-header-button:disabled,
+.nines-header-menu-button:disabled,
+.nines-header-avatar:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+.nines-header-button--secondary {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.34);
+}
+
+.nines-header-button--primary {
+  color: #10213f;
+  background: linear-gradient(135deg, #ffe082, #ffb648);
+  box-shadow: 0 12px 24px rgba(255, 182, 72, 0.24);
+}
+
+.nines-balance-pill {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 126px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.18);
+}
+
+.nines-balance-label {
+  color: rgba(191, 219, 254, 0.78);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nines-balance-value {
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.nines-header-menu-button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.16);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.nines-account-menu {
+  position: relative;
+}
+
+.nines-header-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background:
+    radial-gradient(circle at top, rgba(255, 224, 130, 0.42), transparent 55%),
+    linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.nines-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  padding: 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(14px);
+  z-index: 120;
+}
+
+.nines-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #10213f;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.nines-dropdown-item:hover {
+  background: rgba(226, 232, 240, 0.65);
+}
+
+.nines-dropdown-item--logout {
+  color: #b91c1c;
+}
+
+.nines-loading-chip {
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.22),
+    rgba(226, 232, 240, 0.35),
+    rgba(148, 163, 184, 0.22)
+  );
+  background-size: 200% 100%;
+  animation: nines-shimmer 1.2s linear infinite;
+}
+
+.nines-loading-chip--wide {
+  width: 148px;
+}
+
+.nines-loading-chip--avatar {
+  width: 44px;
+}
+
+@keyframes nines-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .nines-header-shell {
+    padding: 14px 14px 10px;
+  }
+
+  .nines-header-frame {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .nines-balance-pill {
+    min-width: 108px;
+  }
+}
+
+@media (max-width: 680px) {
+  .nines-header-frame {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .nines-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .nines-logo-subtitle {
+    display: none;
+  }
+
+  .nines-dropdown {
+    right: 0;
+    width: min(220px, calc(100vw - 36px));
+  }
+}

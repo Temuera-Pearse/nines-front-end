@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color: #10213f;
+  background: linear-gradient(180deg, #eff6ff 0%, #eefbf3 45%, #fef9ee 100%);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -9,13 +14,13 @@
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Avenir Next', 'Nunito', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body,
 #root {
   min-height: 100vh;
 }

@@ -3,7 +3,7 @@ import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
 import { getRaceConfig, getRaceCurrent, getRaceResults } from './api/race'
 import { OFFLINE_MODE } from './config/runtime'
-import { TopNav } from './components/NewLayout/TopNav'
+import { HeaderGate } from './components/Header/HeaderGate'
 import { CompactRaceInfo } from './components/NewLayout/CompactRaceInfo'
 import { OnTrackEventsCard } from './components/NewLayout/OnTrackEventsCard'
 import { ParimutuelPanel } from './components/NewLayout/ParimutuelPanel'
@@ -161,11 +161,11 @@ function App() {
       ? 'connecting'
       : utcPagePhase(clockSec)
 
-  const renderPage = () => {
+  const renderPageContent = () => {
     // If we have no race data yet, show the connecting screen
     if (!raceId && status === RaceStatus.IDLE) {
       return (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full min-h-[320px]">
           <div className="text-center">
             <div className="text-6xl mb-4">🐎</div>
             <h1 className="text-3xl font-bold mb-2">Welcome to Nines</h1>
@@ -221,10 +221,6 @@ function App() {
                 'radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 70%)',
             }}
           />
-        </div>
-
-        <div style={{ position: 'relative', zIndex: 10, flexShrink: 0 }}>
-          <TopNav />
         </div>
 
         <div
@@ -334,8 +330,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col">
-      <div key={pagePhase} className="page-enter flex-1">
-        {renderPage()}
+      <HeaderGate />
+      <div key={pagePhase} className="page-enter flex-1 min-h-0">
+        {renderPageContent()}
       </div>
     </div>
   )
