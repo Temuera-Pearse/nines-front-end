@@ -46,7 +46,7 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
       <div className="nines-header-frame">
         <NinesLogo />
 
-        <div className="nines-header-actions">
+        <div className="nines-header-center">
           <div className="nines-balance-pill" aria-label="Account balance">
             <span className="nines-balance-label">Balance</span>
             <span className="nines-balance-value">AU$0.00</span>
@@ -59,7 +59,9 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
           >
             Wallet
           </button>
+        </div>
 
+        <div className="nines-header-actions">
           <div className="nines-account-menu" ref={menuBoundaryRef}>
             <button
               type="button"
@@ -69,28 +71,17 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
               aria-expanded={isMenuOpen}
               aria-label={`${displayName} account menu`}
             >
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={displayName}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '16px',
-                  }}
-                />
-              ) : (
-                getInitials(displayName)
-              )}
+              {getInitials(displayName)}
             </button>
 
             <AccountDropdown
               boundaryRef={menuBoundaryRef}
+              balancePreview="Available balance AU$0.00"
               isOpen={isMenuOpen}
               onClose={() => setIsMenuOpen(false)}
               onNavigate={handleNavigate}
               onLogout={handleLogout}
+              user={user}
             />
           </div>
         </div>

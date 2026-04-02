@@ -249,7 +249,7 @@ function App() {
           >
             <div
               style={{
-                flex: '0 0 65%',
+                flex: '0 0 75%',
                 minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
@@ -269,7 +269,7 @@ function App() {
               >
                 <div
                   style={{
-                    flex: '0 0 345px',
+                    flex: '0 0 33.333%',
                     display: 'flex',
                     flexDirection: 'column',
                     minWidth: 0,
@@ -299,7 +299,7 @@ function App() {
                 <div
                   style={{
                     position: 'absolute',
-                    inset: '12px 12px 96px 367px',
+                    inset: '12px 12px 96px calc(33.333% + 12px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -319,7 +319,7 @@ function App() {
               <BottomWidgets />
             </div>
 
-            <div style={{ flex: '0 0 35%', minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ flex: '0 0 25%', minWidth: 0, overflow: 'hidden' }}>
               <ParimutuelPanel />
             </div>
           </div>

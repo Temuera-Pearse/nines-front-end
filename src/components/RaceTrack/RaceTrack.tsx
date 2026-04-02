@@ -101,68 +101,71 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
               : 'NEXT RACE SOON'}
       </div>
 
-      {showStartSignal && <div className="start-banner">And they're off!</div>}
+        <div className="race-track-overlays">
+          {showStartSignal && <div className="start-banner">And they're off!</div>}
 
-      {/* Leader callout */}
-      {status === 'running' &&
-        leaderIdentity &&
-        leader &&
-        leader.position > 10 && (
-          <div
-            className="leader-banner"
-            style={{
-              borderColor: leaderIdentity.hex,
-              color: leaderIdentity.hex,
-            }}
-          >
-            <span
-              className="leader-dot"
-              style={{ background: leaderIdentity.hex }}
-            />
-            🏇 {leaderIdentity.name} leads!
-          </div>
-        )}
+          {status === 'running' &&
+            leaderIdentity &&
+            leader &&
+            leader.position > 10 && (
+              <div
+                className="leader-banner"
+                style={{
+                  borderColor: leaderIdentity.hex,
+                  color: leaderIdentity.hex,
+                }}
+              >
+                <span
+                  className="leader-dot"
+                  style={{ background: leaderIdentity.hex }}
+                />
+                🏇 {leaderIdentity.name} leads!
+              </div>
+            )}
 
-      {status === 'running' && currentEventHeadline && (
-        <div className="event-banner">{currentEventHeadline}</div>
-      )}
-
-      {horses.map((horse, index) => (
-        <div
-          key={horse.id}
-          className={`race-lane race-lane-${index}${horse.id === displayWinnerId ? ' race-lane--winner' : ''}`}
-        >
-          <div
-            className="lane-label"
-            style={{ color: getHorseIdentity(horse.id).hex }}
-          >
-            {getHorseName(horse.id)}
-          </div>
-          <div className="lane-track">
-            <div
-              className="lane-marker lane-marker--start"
-              style={{ left: `${START_LINE_PERCENT}%` }}
-            >
-              {index === 0 ? <span>START</span> : null}
-            </div>
-            <div
-              className="lane-marker lane-marker--finish"
-              style={{ left: `${FINISH_LINE_PERCENT}%` }}
-            >
-              {index === 0 ? <span>FINISH</span> : null}
-            </div>
-            <Horse
-              id={horse.id}
-              position={horse.position}
-              laneNumber={index + 1}
-              interpolationEnabled={interpolationEnabled}
-              activeEventIds={horseEffects[horse.id]?.activeEventIds ?? []}
-              isStunned={horseEffects[horse.id]?.isStunned === true}
-              isRemoved={horseEffects[horse.id]?.isRemoved === true}
-            />
-          </div>
+          {status === 'running' && currentEventHeadline && (
+            <div className="event-banner">{currentEventHeadline}</div>
+          )}
         </div>
-      ))}
+
+        <div className="race-lanes">
+          {horses.map((horse, index) => (
+            <div
+              key={horse.id}
+              className={`race-lane race-lane-${index}${horse.id === displayWinnerId ? ' race-lane--winner' : ''}`}
+            >
+              <div
+                className="lane-label"
+                style={{ color: getHorseIdentity(horse.id).hex }}
+              >
+                {getHorseName(horse.id)}
+              </div>
+              <div className="lane-track">
+                <div
+                  className="lane-marker lane-marker--start"
+                  style={{ left: `${START_LINE_PERCENT}%` }}
+                >
+                  {index === 0 ? <span>START</span> : null}
+                </div>
+                <div
+                  className="lane-marker lane-marker--finish"
+                  style={{ left: `${FINISH_LINE_PERCENT}%` }}
+                >
+                  {index === 0 ? <span>FINISH</span> : null}
+                </div>
+                <Horse
+                  id={horse.id}
+                  position={horse.position}
+                  laneNumber={index + 1}
+                  interpolationEnabled={interpolationEnabled}
+                  activeEventIds={horseEffects[horse.id]?.activeEventIds ?? []}
+                  isStunned={horseEffects[horse.id]?.isStunned === true}
+                  isRemoved={horseEffects[horse.id]?.isRemoved === true}
+                />
+              </div>
+          </div>
+          ))}
+        </div>
 
       {displayWinnerId && (
         <>

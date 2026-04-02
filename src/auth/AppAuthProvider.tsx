@@ -2,7 +2,7 @@ import React, { createContext, useContext } from 'react'
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react'
 import { AUTH0_CONFIG } from './config'
 
-interface AppAuthUser {
+export interface AppAuthUser {
   name: string
   email?: string
   avatarUrl?: string

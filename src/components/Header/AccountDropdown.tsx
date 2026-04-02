@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react'
+import { AppAuthUser } from '../../auth/AppAuthProvider'
+import { UserHeader } from './UserHeader'
 
 interface AccountDropdownProps {
   boundaryRef: React.RefObject<HTMLDivElement>
@@ -6,23 +8,37 @@ interface AccountDropdownProps {
   onClose: () => void
   onNavigate: (target: string) => void
   onLogout: () => void
+  user: AppAuthUser | null
+  balancePreview?: string
 }
 
-const MENU_ITEMS = [
-  'Wallet',
-  'Vault',
-  'Transactions',
-  'My Bets',
-  'Settings',
+const MENU_SECTIONS = [
+  {
+    id: 'money',
+    title: 'Money',
+    items: ['Wallet', 'Vault', 'Transactions'],
+  },
+  {
+    id: 'activity',
+    title: 'Activity',
+    items: ['My Bets'],
+  },
+  {
+    id: 'account',
+    title: 'Account',
+    items: ['Settings'],
+  },
 ] as const
 
 export const AccountDropdown: React.FC<AccountDropdownProps> = React.memo(
   function AccountDropdown({
     boundaryRef,
+    balancePreview,
     isOpen,
     onClose,
     onNavigate,
     onLogout,
+    user,
   }) {
     const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -57,25 +73,40 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = React.memo(
 
     return (
       <div className="nines-dropdown" ref={containerRef} role="menu">
-        {MENU_ITEMS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className="nines-dropdown-item"
-            onClick={() => onNavigate(item)}
-            role="menuitem"
-          >
-            <span>{item}</span>
-          </button>
+        <UserHeader user={user} balancePreview={balancePreview} />
+
+        {MENU_SECTIONS.map((section, sectionIndex) => (
+          <React.Fragment key={section.id}>
+            <div className="nines-dropdown-section">
+              <div className="nines-dropdown-section-label">{section.title}</div>
+              {section.items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className="nines-dropdown-item"
+                  onClick={() => onNavigate(item)}
+                  role="menuitem"
+                >
+                  <span>{item}</span>
+                </button>
+              ))}
+              {section.id === 'account' ? (
+                <button
+                  type="button"
+                  className="nines-dropdown-item nines-dropdown-item--logout"
+                  onClick={onLogout}
+                  role="menuitem"
+                >
+                  <span>Logout</span>
+                </button>
+              ) : null}
+            </div>
+
+            {sectionIndex < MENU_SECTIONS.length - 1 ? (
+              <div className="nines-dropdown-divider" aria-hidden="true" />
+            ) : null}
+          </React.Fragment>
         ))}
-        <button
-          type="button"
-          className="nines-dropdown-item nines-dropdown-item--logout"
-          onClick={onLogout}
-          role="menuitem"
-        >
-          <span>Logout</span>
-        </button>
       </div>
     )
   },
