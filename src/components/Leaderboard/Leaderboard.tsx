@@ -10,7 +10,8 @@ interface Row {
 }
 
 export const Leaderboard: React.FC = () => {
-  const { horses, status, placements } = useRaceStore()
+  const { horses, status, placements, winnerBannerHorseId, finishLineMeters } =
+    useRaceStore()
 
   // When placements are set (race finished), use that canonical order.
   // During the race, sort by live position with a stable id tiebreaker so
@@ -23,6 +24,14 @@ export const Leaderboard: React.FC = () => {
         })
       : [...horses]
           .sort((a, b) => {
+            if (winnerBannerHorseId) {
+              if (a.id === winnerBannerHorseId && b.id !== winnerBannerHorseId) {
+                return -1
+              }
+              if (b.id === winnerBannerHorseId && a.id !== winnerBannerHorseId) {
+                return 1
+              }
+            }
             if (b.position !== a.position) return b.position - a.position
             // Stable tiebreaker: prevents shuffling when positions are equal (e.g. all at 1000m)
             return a.id.localeCompare(b.id)
@@ -46,7 +55,7 @@ export const Leaderboard: React.FC = () => {
       <ol className="leaderboard-list">
         {sorted.map(({ id, position, rank }) => {
           const identity = getHorseIdentity(id)
-          const pct = Math.min(100, (position / 1000) * 100)
+          const pct = Math.min(100, (position / finishLineMeters) * 100)
           const isFlashing = flashing[id]
           return (
             <li

@@ -8,10 +8,11 @@ export const OnTrackEventsCard: React.FC = () => {
   return (
     <div
       style={{
-        background: '#fff',
+        background:
+          'linear-gradient(180deg, rgba(15,23,42,0.96), rgba(17,24,39,0.94))',
         borderRadius: '16px',
-        border: '2px solid rgba(0,0,0,0.05)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+        border: '1px solid rgba(148,163,184,0.18)',
+        boxShadow: '0 18px 40px rgba(2,6,23,0.28)',
         overflow: 'hidden',
         flex: '1 1 0',
         height: '100%',
@@ -47,7 +48,7 @@ export const OnTrackEventsCard: React.FC = () => {
       >
         <div
           style={{
-            color: '#64748b',
+            color: '#94a3b8',
             fontWeight: 700,
             fontSize: '12px',
             lineHeight: 1.5,
@@ -77,12 +78,11 @@ export const OnTrackEventsCard: React.FC = () => {
                   background: eventEntry.usesHorseAccent
                     ? `${eventEntry.accentColor}1a`
                     : index === 0
-                      ? 'rgba(148,163,184,0.18)'
-                      : '#f8fafc',
-                  border:
-                    eventEntry.usesHorseAccent
-                      ? `1px solid ${eventEntry.accentColor}55`
-                      : '1px solid rgba(148,163,184,0.18)',
+                      ? 'rgba(71,85,105,0.34)'
+                      : 'rgba(15,23,42,0.72)',
+                  border: eventEntry.usesHorseAccent
+                    ? `1px solid ${eventEntry.accentColor}55`
+                    : '1px solid rgba(148,163,184,0.18)',
                   borderLeft: `4px solid ${eventEntry.accentColor}`,
                   borderRadius: '12px',
                   padding: '10px 12px',
@@ -109,7 +109,7 @@ export const OnTrackEventsCard: React.FC = () => {
                   style={{
                     color: eventEntry.usesHorseAccent
                       ? eventEntry.accentColor
-                      : '#1e293b',
+                      : '#e2e8f0',
                     fontWeight: index === 0 ? 800 : 700,
                     fontSize: '13px',
                     lineHeight: 1.4,
@@ -122,11 +122,11 @@ export const OnTrackEventsCard: React.FC = () => {
           ) : (
             <div
               style={{
-                background: '#f8fafc',
+                background: 'rgba(15,23,42,0.72)',
                 border: '1px solid rgba(148,163,184,0.18)',
                 borderRadius: '12px',
                 padding: '10px 12px',
-                color: '#475569',
+                color: '#cbd5e1',
                 fontWeight: 700,
                 fontSize: '13px',
                 lineHeight: 1.4,

@@ -32,6 +32,13 @@ export interface RaceResultsResponse {
   [key: string]: unknown
 }
 
+export interface RaceFinalTicksResponse {
+  ticksFinal: Array<{
+    tickIndex: number
+    positions: number[]
+  }>
+}
+
 export async function getRaceConfig(): Promise<RaceConfigResponse> {
   return fetchJson<RaceConfigResponse>('/race/config', { method: 'GET' })
 }
@@ -65,8 +72,13 @@ export async function getRaceTimeline(raceId: string): Promise<unknown> {
   })
 }
 
-export async function getRaceTicksFinal(raceId: string): Promise<unknown> {
-  return fetchJson<unknown>(`/race/ticks-final/${encodeURIComponent(raceId)}`, {
-    method: 'GET',
-  })
+export async function getRaceTicksFinal(
+  raceId: string,
+): Promise<RaceFinalTicksResponse> {
+  return fetchJson<RaceFinalTicksResponse>(
+    `/race/ticks-final/${encodeURIComponent(raceId)}`,
+    {
+      method: 'GET',
+    },
+  )
 }

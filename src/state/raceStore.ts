@@ -156,6 +156,8 @@ export interface RaceState {
   status: RaceStatus
   /** Stable ordering for array-based tick payloads */
   horseOrder: string[]
+  trackLengthMeters: number
+  finishLineMeters: number
   horses: Horse[]
   recentEvents: RaceEventRecord[]
   horseEffects: Record<string, HorseEffectState>
@@ -168,6 +170,8 @@ export interface RaceState {
   raceEndUtc: string
   interpolationEnabled: boolean
   backendResults: BackendRaceResult[]
+  finishTimesMs: Record<string, number>
+  finishTickIndex: Record<string, number>
   finishAnimationKey: number
   bannerVisibleUntilUtc: string
   resultsVisibleUntilUtc: string
@@ -178,6 +182,7 @@ export interface RaceState {
   setRaceId: (id: string) => void
   setStatus: (status: RaceStatus) => void
   setHorseOrder: (order: string[]) => void
+  setRaceGeometry: (trackLengthMeters?: number, finishLineMeters?: number) => void
   setHorses: (horses: Horse[]) => void
   updatePositions: (positions: Record<string, number>) => void
   setWinner: (winner: string, placements: string[]) => void
@@ -202,6 +207,8 @@ const initialState = {
   raceId: null,
   status: RaceStatus.IDLE,
   horseOrder: [] as string[],
+  trackLengthMeters: 1000,
+  finishLineMeters: 1000,
   horses: [],
   recentEvents: [] as RaceEventRecord[],
   horseEffects: {} as Record<string, HorseEffectState>,
@@ -214,6 +221,8 @@ const initialState = {
   raceEndUtc: '',
   interpolationEnabled: true,
   backendResults: [] as BackendRaceResult[],
+  finishTimesMs: {} as Record<string, number>,
+  finishTickIndex: {} as Record<string, number>,
   finishAnimationKey: 0,
   bannerVisibleUntilUtc: '',
   resultsVisibleUntilUtc: '',
@@ -228,6 +237,23 @@ export const useRaceStore = create<RaceState>((set, get) => ({
   setStatus: (status) => set({ status }),
 
   setHorseOrder: (horseOrder) => set({ horseOrder }),
+
+  setRaceGeometry: (trackLengthMeters, finishLineMeters) =>
+    set((state) => {
+      const nextTrackLength =
+        Number.isFinite(trackLengthMeters) && (trackLengthMeters ?? 0) > 0
+          ? Number(trackLengthMeters)
+          : state.trackLengthMeters
+      const nextFinishLine =
+        Number.isFinite(finishLineMeters) && (finishLineMeters ?? 0) > 0
+          ? Number(finishLineMeters)
+          : nextTrackLength
+
+      return {
+        trackLengthMeters: nextTrackLength,
+        finishLineMeters: Math.min(nextFinishLine, nextTrackLength),
+      }
+    }),
 
   setHorses: (horses) => set({ horses }),
 
@@ -336,6 +362,14 @@ export const useRaceStore = create<RaceState>((set, get) => ({
     set({
       raceId,
       winnerBannerHorseId,
+      finishTimesMs:
+        payload.finishTimesMs && typeof payload.finishTimesMs === 'object'
+          ? payload.finishTimesMs
+          : state.finishTimesMs,
+      finishTickIndex:
+        payload.finishTickIndex && typeof payload.finishTickIndex === 'object'
+          ? payload.finishTickIndex
+          : state.finishTickIndex,
       bannerVisibleUntilUtc,
       resultsVisibleUntilUtc,
     })
@@ -374,9 +408,17 @@ export const useRaceStore = create<RaceState>((set, get) => ({
       raceId,
       raceEndUtc,
       status: RaceStatus.FINISHED,
-      interpolationEnabled: true,
+      interpolationEnabled: false,
       horseEffects: {},
       backendResults,
+      finishTimesMs:
+        payload.finishTimesMs && typeof payload.finishTimesMs === 'object'
+          ? payload.finishTimesMs
+          : state.finishTimesMs,
+      finishTickIndex:
+        payload.finishTickIndex && typeof payload.finishTickIndex === 'object'
+          ? payload.finishTickIndex
+          : state.finishTickIndex,
       finishAnimationKey: state.finishAnimationKey + 1,
       bannerVisibleUntilUtc,
       resultsVisibleUntilUtc,
@@ -425,14 +467,23 @@ export const useRaceStore = create<RaceState>((set, get) => ({
       raceEndUtc: '',
       interpolationEnabled: true,
       backendResults: [],
+      finishTimesMs: {},
+      finishTickIndex: {},
       finishAnimationKey: state.finishAnimationKey,
       bannerVisibleUntilUtc: '',
       resultsVisibleUntilUtc: '',
       lastResult: state.lastResult,
+      trackLengthMeters: state.trackLengthMeters,
+      finishLineMeters: state.finishLineMeters,
     })
   },
 
   // reset() clears live race state but PRESERVES lastResult for the results page
   reset: () =>
-    set((state) => ({ ...initialState, lastResult: state.lastResult })),
+    set((state) => ({
+      ...initialState,
+      lastResult: state.lastResult,
+      trackLengthMeters: state.trackLengthMeters,
+      finishLineMeters: state.finishLineMeters,
+    })),
 }))

@@ -22,7 +22,15 @@ function useClockMs() {
 }
 
 export const RacePage: React.FC = () => {
-  const { raceId, horses, winner, placements, lastResult, status } =
+  const {
+    raceId,
+    horses,
+    winner,
+    winnerBannerHorseId,
+    placements,
+    lastResult,
+    status,
+  } =
     useRaceStore()
   const { showFinishAnimation } = useRaceLifecycle()
   const clockMs = useClockMs()
@@ -45,6 +53,9 @@ export const RacePage: React.FC = () => {
     ? [...horses].sort((a, b) => b.position - a.position)[0]
     : null
   const leaderIdentity = leader ? getHorseIdentity(leader.id) : null
+  const declaredWinnerIdentity = winnerBannerHorseId
+    ? getHorseIdentity(winnerBannerHorseId)
+    : null
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -78,6 +89,7 @@ export const RacePage: React.FC = () => {
               )}
               {/* Leader banner (only during race) */}
               {isRunning &&
+                !winnerBannerHorseId &&
                 leaderIdentity &&
                 leader &&
                 leader.position > 10 && (
@@ -94,6 +106,22 @@ export const RacePage: React.FC = () => {
                       style={{ background: leaderIdentity.hex }}
                     />
                     🏇 {leaderIdentity.name} leads!
+                  </div>
+                )}
+                {isRunning && declaredWinnerIdentity && (
+                  <div
+                    className="mt-2 inline-flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full"
+                    style={{
+                      background: `${declaredWinnerIdentity.hex}22`,
+                      color: declaredWinnerIdentity.hex,
+                      border: `1px solid ${declaredWinnerIdentity.hex}55`,
+                    }}
+                  >
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full"
+                      style={{ background: declaredWinnerIdentity.hex }}
+                    />
+                    🏆 Official winner: {declaredWinnerIdentity.name}
                   </div>
                 )}
             </div>

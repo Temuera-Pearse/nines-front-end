@@ -16,7 +16,7 @@ const MENU_SECTIONS = [
   {
     id: 'money',
     title: 'Money',
-    items: ['Wallet', 'Vault', 'Transactions'],
+    items: ['Add Funds', 'Vault', 'Transactions'],
   },
   {
     id: 'activity',
@@ -78,7 +78,9 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = React.memo(
         {MENU_SECTIONS.map((section, sectionIndex) => (
           <React.Fragment key={section.id}>
             <div className="nines-dropdown-section">
-              <div className="nines-dropdown-section-label">{section.title}</div>
+              <div className="nines-dropdown-section-label">
+                {section.title}
+              </div>
               {section.items.map((item) => (
                 <button
                   key={item}

@@ -85,6 +85,7 @@ export const AppAuthProvider: React.FC<React.PropsWithChildren> = ({
     <Auth0Provider
       domain={AUTH0_CONFIG.domain}
       clientId={AUTH0_CONFIG.clientId}
+      cacheLocation={AUTH0_CONFIG.cacheLocation}
       authorizationParams={{
         redirect_uri: window.location.origin,
       }}

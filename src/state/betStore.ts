@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import { placeBet as placeBetApi } from '../api/bets'
 import { useRaceStore } from './raceStore'
 
+const USDC_MINOR_UNITS = 1_000_000
+
+function toUsdcMinorUnitString(amount: number): string {
+  return String(Math.round(amount * USDC_MINOR_UNITS))
+}
+
 interface BetState {
   selectedHorse: string | null
   amount: number
@@ -31,8 +37,9 @@ export const useBetStore = create<BetState>((set, get) => ({
 
     await placeBetApi({
       raceId,
-      horseId: selectedHorse,
-      amount,
+      selectionId: selectedHorse,
+      stakeMinor: toUsdcMinorUnitString(amount),
+      currency: 'USDC',
     })
   },
 

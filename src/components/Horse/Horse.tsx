@@ -6,14 +6,14 @@ import {
 } from '../../utils/raceHelpers'
 import './Horse.css'
 
-const FINISH_GUTTER_PX = 15
 const HORSE_W = 20
-const RUNOFF_OVERFLOW_PX = 56
 
 interface HorseProps {
   id: string
   position: number
   laneNumber: number
+  trackLengthMeters?: number
+  finishLineMeters?: number
   interpolationEnabled?: boolean
   activeEventIds?: string[]
   isStunned?: boolean
@@ -24,6 +24,8 @@ export const Horse: React.FC<HorseProps> = ({
   id,
   position,
   laneNumber,
+  trackLengthMeters = 1000,
+  finishLineMeters = 1000,
   interpolationEnabled = true,
   activeEventIds = [],
   isStunned = false,
@@ -60,13 +62,17 @@ export const Horse: React.FC<HorseProps> = ({
     const container = containerRef.current
     if (!container) return
 
-    const progress = positionToProgress(position)
-    const trackWidth = container.clientWidth
-    const maxLeft = Math.max(
-      0,
-      trackWidth - HORSE_W - FINISH_GUTTER_PX + RUNOFF_OVERFLOW_PX,
+    const progress = positionToProgress(
+      position,
+      trackLengthMeters,
+      finishLineMeters,
     )
-    const newTarget = Math.min(maxLeft, Math.max(0, progress * maxLeft))
+    const trackWidth = container.clientWidth
+    const maxLeft = Math.max(0, trackWidth - HORSE_W)
+    const newTarget = Math.min(
+      maxLeft,
+      Math.max(0, progress * trackWidth - HORSE_W),
+    )
     targetRef.current = newTarget
 
     if (!interpolationEnabled) {
@@ -128,7 +134,7 @@ export const Horse: React.FC<HorseProps> = ({
     segmentDurationRef.current = nextDuration
     lastUpdateAtRef.current = now
     hadNonZeroRef.current = true
-  }, [position, interpolationEnabled])
+  }, [finishLineMeters, interpolationEnabled, position, trackLengthMeters])
 
   // rAF loop: lerp currentRef → targetRef and write directly to DOM
   useEffect(() => {
@@ -182,13 +188,17 @@ export const Horse: React.FC<HorseProps> = ({
     const container = containerRef.current
     if (!container) return
     const ro = new ResizeObserver(() => {
-      const progress = positionToProgress(position)
-      const trackWidth = container.clientWidth
-      const maxLeft = Math.max(
-        0,
-        trackWidth - HORSE_W - FINISH_GUTTER_PX + RUNOFF_OVERFLOW_PX,
+      const progress = positionToProgress(
+        position,
+        trackLengthMeters,
+        finishLineMeters,
       )
-      const resizedTarget = Math.min(maxLeft, Math.max(0, progress * maxLeft))
+      const trackWidth = container.clientWidth
+      const maxLeft = Math.max(0, trackWidth - HORSE_W)
+      const resizedTarget = Math.min(
+        maxLeft,
+        Math.max(0, progress * trackWidth - HORSE_W),
+      )
       targetRef.current = resizedTarget
       currentRef.current = resizedTarget
       segmentFromRef.current = resizedTarget
@@ -199,7 +209,7 @@ export const Horse: React.FC<HorseProps> = ({
     })
     ro.observe(container)
     return () => ro.disconnect()
-  }, [position])
+  }, [finishLineMeters, position, trackLengthMeters])
 
   return (
     <div className="horse-container" ref={containerRef}>

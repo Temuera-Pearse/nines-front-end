@@ -118,6 +118,30 @@ interface ErrorMsg {
 
 type EventCallback = (data: WebSocketEvent) => void
 
+function readGeometryFromConfig(config?: Record<string, unknown>): {
+  trackLengthMeters?: number
+  finishLineMeters?: number
+} {
+  if (!config || typeof config !== 'object') return {}
+
+  const trackLengthRaw = config.trackLength
+  const finishRatioRaw = config.finishRatio
+  const trackLengthMeters =
+    typeof trackLengthRaw === 'number' && Number.isFinite(trackLengthRaw)
+      ? trackLengthRaw
+      : undefined
+  const finishRatio =
+    typeof finishRatioRaw === 'number' && Number.isFinite(finishRatioRaw)
+      ? finishRatioRaw
+      : undefined
+  const finishLineMeters =
+    trackLengthMeters !== undefined && finishRatio !== undefined
+      ? trackLengthMeters * finishRatio
+      : trackLengthMeters
+
+  return { trackLengthMeters, finishLineMeters }
+}
+
 class WebSocketService {
   private ws: WebSocket | null = null
   private listeners: Map<EventType, Set<EventCallback>> = new Map()
@@ -290,6 +314,16 @@ class WebSocketService {
       this.setHorseOrder(msg.horseOrder)
       this.ensureHorsesInitialized(msg.horseOrder)
     }
+    const geometry = readGeometryFromConfig(msg.config)
+    if (
+      geometry.trackLengthMeters !== undefined ||
+      geometry.finishLineMeters !== undefined
+    ) {
+      store.setRaceGeometry(
+        geometry.trackLengthMeters,
+        geometry.finishLineMeters,
+      )
+    }
 
     const currentTickIndex =
       typeof msg.currentTickIndex === 'number' ? msg.currentTickIndex : -1
@@ -405,18 +439,18 @@ class WebSocketService {
       }
       const next = this.lastPositions.map((p, i) => p + (deltas[i] ?? 0))
       this.lastPositions = next
-      this.applyPositionsArray(next)
+      this.applyPositionsArray(next, frame.tickIndex)
       return
     }
 
     // Plain tick or keyframe
     if (Array.isArray(positions) && positions.length > 0) {
       this.lastPositions = positions.slice()
-      this.applyPositionsArray(positions)
+      this.applyPositionsArray(positions, frame.tickIndex)
     }
   }
 
-  private applyPositionsArray(positions: number[]) {
+  private applyPositionsArray(positions: number[], tickIndex?: number) {
     const store = useRaceStore.getState()
     const order = this.horseOrder ?? store.horseOrder
     if (!Array.isArray(order) || order.length === 0) {
@@ -440,7 +474,29 @@ class WebSocketService {
       if (typeof pos === 'number') out[id] = pos
     }
     if (Object.keys(out).length > 0) {
+      const previousPositions = new Map(
+        store.horses.map((horse) => [horse.id, horse.position]),
+      )
+      const finishLineMeters =
+        Number.isFinite(store.finishLineMeters) && store.finishLineMeters > 0
+          ? store.finishLineMeters
+          : 1000
+      const crossingEvents: RaceEventRecord[] = Object.entries(out)
+        .filter(([horseId, nextPosition]) => {
+          const previousPosition = previousPositions.get(horseId) ?? 0
+          return previousPosition < finishLineMeters && nextPosition >= finishLineMeters
+        })
+        .map(([horseId]) => ({
+          eventId: 'finish_line_crossed',
+          instanceId: `finish:${store.raceId ?? 'race'}:${horseId}`,
+          tickIndex: typeof tickIndex === 'number' ? tickIndex : Number.MAX_SAFE_INTEGER,
+          affectedHorseIds: [horseId],
+        }))
+
       store.updatePositions(out)
+      if (crossingEvents.length > 0) {
+        store.applyLiveTickDetails(crossingEvents)
+      }
       if (
         store.status !== RaceStatus.RUNNING &&
         store.status !== RaceStatus.FINISHED &&

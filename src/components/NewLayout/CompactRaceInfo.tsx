@@ -39,30 +39,30 @@ export const CompactRaceInfo: React.FC = () => {
       style={{
         background:
           'linear-gradient(135deg, #fff9f0 0%, #fff 50%, #f0f7ff 100%)',
-        borderRadius: '16px',
+        borderRadius: '14px',
         border: '2px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 4px 16px rgba(79,142,247,0.1)',
+        boxShadow: '0 3px 12px rgba(79,142,247,0.08)',
         overflow: 'hidden',
         flexShrink: 0,
       }}
     >
       <div
         style={{
-          height: '4px',
+          height: '3px',
           background:
             'linear-gradient(90deg, #4f8ef7, #6c63ff, #f472b6, #fb923c, #4ade80)',
         }}
       />
 
       <div
-        style={{ display: 'flex', alignItems: 'center', padding: '8px 20px' }}
+        style={{ display: 'flex', alignItems: 'center', padding: '6px 14px' }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            paddingRight: '20px',
+            gap: '8px',
+            paddingRight: '14px',
             borderRight: '1.5px solid #e2e8f0',
           }}
         >
@@ -70,15 +70,15 @@ export const CompactRaceInfo: React.FC = () => {
             style={{
               background: 'linear-gradient(135deg, #4f8ef7, #6c63ff)',
               borderRadius: '12px',
-              padding: '4px 12px',
+              padding: '3px 10px',
               boxShadow: '0 2px 0 #3b5fc0',
             }}
           >
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: '11px' }}>
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: '10px' }}>
               {raceId ?? 'RACE'}
             </span>
           </div>
-          <span style={{ color: '#64748b', fontWeight: 700, fontSize: '12px' }}>
+          <span style={{ color: '#64748b', fontWeight: 700, fontSize: '11px' }}>
             {runnerCount} Runners
           </span>
         </div>
@@ -87,12 +87,12 @@ export const CompactRaceInfo: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '0 20px',
+            gap: '8px',
+            padding: '0 14px',
             borderRight: '1.5px solid #e2e8f0',
           }}
         >
-          <span style={{ color: '#94a3b8', fontWeight: 700, fontSize: '11px' }}>
+          <span style={{ color: '#94a3b8', fontWeight: 700, fontSize: '10px' }}>
             {headerTiming.timerLabel}
           </span>
           {headerTiming.isLive ? (
@@ -101,9 +101,9 @@ export const CompactRaceInfo: React.FC = () => {
                 background: headerTiming.accent,
                 color: '#fff',
                 fontWeight: 900,
-                fontSize: '14px',
+                fontSize: '12px',
                 borderRadius: '10px',
-                padding: '4px 12px',
+                padding: '3px 10px',
                 boxShadow: '0 2px 0 #15803d',
               }}
             >
@@ -115,9 +115,9 @@ export const CompactRaceInfo: React.FC = () => {
                 background: headerTiming.accent,
                 color: '#fff',
                 fontWeight: 900,
-                fontSize: '22px',
+                fontSize: '18px',
                 borderRadius: '12px',
-                padding: '4px 14px',
+                padding: '3px 12px',
               }}
             >
               {headerTiming.timerValue}
@@ -129,8 +129,8 @@ export const CompactRaceInfo: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '20px',
-            padding: '0 20px',
+            gap: '14px',
+            padding: '0 14px',
             borderRight: '1.5px solid #e2e8f0',
             flex: 1,
           }}
@@ -153,10 +153,10 @@ export const CompactRaceInfo: React.FC = () => {
 
         <div
           style={{
-            paddingLeft: '20px',
+            paddingLeft: '14px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
           }}
         >
           <div
@@ -173,7 +173,7 @@ export const CompactRaceInfo: React.FC = () => {
             style={{
               color: headerTiming.pulseColor,
               fontWeight: 800,
-              fontSize: '12px',
+              fontSize: '11px',
             }}
           >
             {headerTiming.stateLabel}

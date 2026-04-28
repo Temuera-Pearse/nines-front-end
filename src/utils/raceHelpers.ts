@@ -8,9 +8,52 @@ export const VISUAL_RUNOFF_DISTANCE_METERS =
 export const VISUAL_OFFSCREEN_OVERSHOOT_METERS = 60
 
 const DEFAULT_TRACK_LENGTH_METERS = OFFICIAL_RACE_DISTANCE_METERS
+const DEFAULT_FINISH_LINE_METERS = OFFICIAL_RACE_DISTANCE_METERS
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
+}
+
+function normalizePositiveNumber(
+  value: number,
+  fallback: number,
+): number {
+  return Number.isFinite(value) && value > 0 ? value : fallback
+}
+
+export interface RaceVisualMetrics {
+  startProgress: number
+  finishProgress: number
+  raceDistanceMeters: number
+  visualTrackLengthMeters: number
+}
+
+export function getRaceVisualMetrics(
+  trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
+  finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
+): RaceVisualMetrics {
+  const safeTrackLength = normalizePositiveNumber(
+    trackLengthMeters,
+    DEFAULT_TRACK_LENGTH_METERS,
+  )
+  const safeFinishLine = normalizePositiveNumber(
+    finishLineMeters,
+    safeTrackLength,
+  )
+  const raceDistanceMeters = Math.min(safeFinishLine, safeTrackLength)
+  const visualTrackLengthMeters =
+    VISUAL_START_LINE_METERS +
+    raceDistanceMeters +
+    VISUAL_RUNOFF_DISTANCE_METERS
+
+  return {
+    startProgress: VISUAL_START_LINE_METERS / visualTrackLengthMeters,
+    finishProgress:
+      (VISUAL_START_LINE_METERS + raceDistanceMeters) /
+      visualTrackLengthMeters,
+    raceDistanceMeters,
+    visualTrackLengthMeters,
+  }
 }
 
 // ─── Horse identity catalogue ────────────────────────────────────────────────
@@ -89,6 +132,13 @@ export function describeRaceEvent(
   eventId: string,
   affectedHorseIds: string[] = [],
 ): string {
+  if (eventId === 'finish_line_crossed') {
+    if (affectedHorseIds.length >= 1) {
+      return `${getHorseName(affectedHorseIds[0])} crossed the finish line`
+    }
+    return 'A horse crossed the finish line'
+  }
+
   const label = getRaceEventLabel(eventId)
 
   if (affectedHorseIds.length === 1) {
@@ -112,50 +162,35 @@ export function describeRaceEvent(
 export function positionToPercentage(
   positionMeters: number,
   trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
+  finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
 ): number {
-  const startProgress =
-    (VISUAL_START_LINE_METERS / VISUAL_TRACK_LENGTH_METERS) * 100
+  const { startProgress, raceDistanceMeters, visualTrackLengthMeters } =
+    getRaceVisualMetrics(trackLengthMeters, finishLineMeters)
   if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
-    return startProgress
+    return startProgress * 100
   }
-  if (!Number.isFinite(trackLengthMeters) || trackLengthMeters <= 0) return 0
 
-  const visualFinishMeters = VISUAL_START_LINE_METERS + trackLengthMeters
-  const maxVisualMeters =
-    visualFinishMeters +
-    VISUAL_RUNOFF_DISTANCE_METERS +
-    VISUAL_OFFSCREEN_OVERSHOOT_METERS
-  const visualMeters = clamp(
-    VISUAL_START_LINE_METERS + positionMeters,
-    VISUAL_START_LINE_METERS,
-    maxVisualMeters,
-  )
+  const visualMeters =
+    VISUAL_START_LINE_METERS + clamp(positionMeters, 0, raceDistanceMeters)
 
-  return clamp((visualMeters / VISUAL_TRACK_LENGTH_METERS) * 100, 0, 110)
+  return clamp((visualMeters / visualTrackLengthMeters) * 100, 0, 100)
 }
 
 export function positionToProgress(
   positionMeters: number,
   trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
+  finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
 ): number {
-  const startProgress = VISUAL_START_LINE_METERS / VISUAL_TRACK_LENGTH_METERS
+  const { startProgress, raceDistanceMeters, visualTrackLengthMeters } =
+    getRaceVisualMetrics(trackLengthMeters, finishLineMeters)
   if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
     return startProgress
   }
-  if (!Number.isFinite(trackLengthMeters) || trackLengthMeters <= 0) return 0
 
-  const visualFinishMeters = VISUAL_START_LINE_METERS + trackLengthMeters
-  const maxVisualMeters =
-    visualFinishMeters +
-    VISUAL_RUNOFF_DISTANCE_METERS +
-    VISUAL_OFFSCREEN_OVERSHOOT_METERS
-  const visualMeters = clamp(
-    VISUAL_START_LINE_METERS + positionMeters,
-    VISUAL_START_LINE_METERS,
-    maxVisualMeters,
-  )
+  const visualMeters =
+    VISUAL_START_LINE_METERS + clamp(positionMeters, 0, raceDistanceMeters)
 
-  return clamp(visualMeters / VISUAL_TRACK_LENGTH_METERS, 0, 1.1)
+  return clamp(visualMeters / visualTrackLengthMeters, 0, 1)
 }
 
 export function getHorseColor(horseId: string): string {

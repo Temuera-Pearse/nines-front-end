@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react'
+import { useAppAuth } from './auth/AppAuthProvider'
 import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
-import { getRaceConfig, getRaceCurrent, getRaceResults } from './api/race'
+import {
+  getRaceConfig,
+  getRaceCurrent,
+  getRaceResults,
+  getRaceTicksFinal,
+} from './api/race'
 import { OFFLINE_MODE } from './config/runtime'
 import { HeaderGate } from './components/Header/HeaderGate'
-import { CompactRaceInfo } from './components/NewLayout/CompactRaceInfo'
+import { BettingArea } from './components/BettingArea/BettingArea'
+import { AddFundsDrawer } from './components/Funding/AddFundsDrawer'
 import { OnTrackEventsCard } from './components/NewLayout/OnTrackEventsCard'
-import { ParimutuelPanel } from './components/NewLayout/ParimutuelPanel'
 import { BottomWidgets } from './components/NewLayout/BottomWidgets'
 import { RaceTrack } from './components/RaceTrack/RaceTrack'
 import { ResultsPanel } from './components/ResultsPanel/ResultsPanel'
@@ -24,7 +30,18 @@ function utcPagePhase(sec: number): 'track' {
   return 'track'
 }
 
+const AppLoadingState: React.FC<{ message: string }> = ({ message }) => (
+  <div className="flex items-center justify-center h-full min-h-[320px]">
+    <div className="text-center">
+      <div className="text-6xl mb-4">🐎</div>
+      <h1 className="text-3xl font-bold mb-2">Welcome to Nines</h1>
+      <p className="text-gray-600">{message}</p>
+    </div>
+  </div>
+)
+
 function App() {
+  const { isEnabled, isLoading } = useAppAuth()
   const status = useRaceStore((s) => s.status)
   const raceId = useRaceStore((s) => s.raceId)
   const resultsWinner = useRaceStore(selectResultsWinner)
@@ -45,6 +62,52 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
+
+    const applyRaceGeometry = (config?: Record<string, unknown>, finishLine?: unknown) => {
+      const trackLengthMeters =
+        typeof config?.trackLength === 'number' && Number.isFinite(config.trackLength)
+          ? config.trackLength
+          : undefined
+      const finishLineMeters =
+        typeof finishLine === 'number' && Number.isFinite(finishLine)
+          ? finishLine
+          : typeof config?.finishRatio === 'number' &&
+              Number.isFinite(config.finishRatio) &&
+              trackLengthMeters !== undefined
+            ? trackLengthMeters * config.finishRatio
+            : trackLengthMeters
+
+      if (
+        trackLengthMeters !== undefined ||
+        finishLineMeters !== undefined
+      ) {
+        useRaceStore
+          .getState()
+          .setRaceGeometry(trackLengthMeters, finishLineMeters)
+      }
+    }
+
+    const applyFinalTickPositions = (positions: number[]) => {
+      if (!Array.isArray(positions) || positions.length === 0) return
+      const store = useRaceStore.getState()
+      const order =
+        store.horseOrder.length === positions.length
+          ? store.horseOrder
+          : store.horses.length === positions.length
+            ? store.horses.map((horse) => horse.id)
+            : Array.from({ length: positions.length }, (_, index) => `horse-${index}`)
+
+      store.setHorseOrder(order)
+      store.setHorses(
+        order.map((id, index) => ({
+          id,
+          position:
+            typeof positions[index] === 'number' && Number.isFinite(positions[index])
+              ? positions[index]
+              : 0,
+        })),
+      )
+    }
 
     const ensureDemoState = () => {
       const store = useRaceStore.getState()
@@ -82,6 +145,10 @@ function App() {
 
         const store = useRaceStore.getState()
         store.setRaceId(current.raceId)
+        applyRaceGeometry(
+          current.config as Record<string, unknown> | undefined,
+          current.finishLine,
+        )
 
         const start =
           typeof current.startTime === 'string' ? current.startTime : ''
@@ -89,8 +156,16 @@ function App() {
 
         if (end) {
           try {
-            const results = await getRaceResults(current.raceId)
+            const [results, finalTicks] = await Promise.all([
+              getRaceResults(current.raceId),
+              getRaceTicksFinal(current.raceId).catch(() => null),
+            ])
             if (!cancelled) {
+              const lastTick =
+                finalTicks?.ticksFinal?.[finalTicks.ticksFinal.length - 1]
+              if (lastTick?.positions) {
+                applyFinalTickPositions(lastTick.positions)
+              }
               store.handleRaceFinish({
                 raceId: current.raceId,
                 timestampUtc:
@@ -161,18 +236,16 @@ function App() {
       ? 'connecting'
       : utcPagePhase(clockSec)
 
+  const isRestoringAuth = isEnabled && isLoading
+
   const renderPageContent = () => {
+    if (isRestoringAuth) {
+      return <AppLoadingState message="Restoring your session..." />
+    }
+
     // If we have no race data yet, show the connecting screen
     if (!raceId && status === RaceStatus.IDLE) {
-      return (
-        <div className="flex items-center justify-center h-full min-h-[320px]">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🐎</div>
-            <h1 className="text-3xl font-bold mb-2">Welcome to Nines</h1>
-            <p className="text-gray-600">Connecting to race server...</p>
-          </div>
-        </div>
-      )
+      return <AppLoadingState message="Connecting to race server..." />
     }
 
     return (
@@ -183,7 +256,7 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           background:
-            'linear-gradient(160deg, #dbeafe 0%, #eff6ff 40%, #fef9ee 75%, #ecfdf5 100%)',
+            'linear-gradient(165deg, #020617 0%, #0f172a 36%, #111827 70%, #172554 100%)',
           fontFamily: "'Nunito', sans-serif",
           position: 'relative',
         }}
@@ -206,7 +279,7 @@ function App() {
               height: '280px',
               borderRadius: '50%',
               background:
-                'radial-gradient(circle, rgba(79,142,247,0.09) 0%, transparent 70%)',
+                'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 72%)',
             }}
           />
           <div
@@ -218,7 +291,7 @@ function App() {
               height: '340px',
               borderRadius: '50%',
               background:
-                'radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 70%)',
+                'radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 72%)',
             }}
           />
         </div>
@@ -229,99 +302,82 @@ function App() {
             minHeight: 0,
             position: 'relative',
             zIndex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            padding: '10px 20px 10px',
+            display: 'grid',
+            gridTemplateColumns: '28% minmax(0, 1fr) 24%',
+            gridTemplateRows: 'minmax(0, 1fr) auto',
+            gap: '10px',
+            padding: '8px 16px 8px',
             overflow: 'hidden',
           }}
         >
-          <CompactRaceInfo />
-
           <div
             style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              gap: '10px',
+              gridColumn: '1',
+              gridRow: '1 / span 2',
+              minWidth: 0,
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                flex: '0 0 75%',
-                minWidth: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                overflow: 'hidden',
-                position: 'relative',
-              }}
-            >
+            <BettingArea />
+          </div>
+
+          <div
+            style={{
+              gridColumn: '2',
+              gridRow: '1',
+              minWidth: 0,
+              minHeight: 0,
+              height: '100%',
+              maxHeight: '100%',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <RaceTrack showFinishAnimation={showFinishAnimation} />
+            {showResultsPanel && (
               <div
                 style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: 'hidden',
+                  position: 'absolute',
+                  inset: '10px',
                   display: 'flex',
-                  gap: '10px',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 30,
+                  pointerEvents: 'auto',
                 }}
               >
-                <div
-                  style={{
-                    flex: '0 0 33.333%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minWidth: 0,
-                    minHeight: 0,
-                    height: '100%',
-                    maxHeight: '100%',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <OnTrackEventsCard />
-                </div>
-
-                <div
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    minHeight: 0,
-                    height: '100%',
-                    maxHeight: '100%',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <RaceTrack showFinishAnimation={showFinishAnimation} />
-                </div>
+                <ResultsPanel
+                  isVisible={showResultsPanel}
+                  winner={resultsWinner}
+                  standings={resultsStandings}
+                  nextRaceStartsInSeconds={resultsCountdownSeconds}
+                  onComplete={completeResultsPhase}
+                />
               </div>
-              {showResultsPanel && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: '12px 12px 96px calc(33.333% + 12px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 30,
-                    pointerEvents: 'auto',
-                  }}
-                >
-                  <ResultsPanel
-                    isVisible={showResultsPanel}
-                    winner={resultsWinner}
-                    standings={resultsStandings}
-                    nextRaceStartsInSeconds={resultsCountdownSeconds}
-                    onComplete={completeResultsPhase}
-                  />
-                </div>
-              )}
-              <BottomWidgets />
-            </div>
+            )}
+          </div>
 
-            <div style={{ flex: '0 0 25%', minWidth: 0, overflow: 'hidden' }}>
-              <ParimutuelPanel />
-            </div>
+          <div
+            style={{
+              gridColumn: '3',
+              gridRow: '1',
+              minWidth: 0,
+              minHeight: 0,
+              overflow: 'hidden',
+            }}
+          >
+            <OnTrackEventsCard />
+          </div>
+
+          <div
+            style={{
+              gridColumn: '2 / 4',
+              gridRow: '2',
+              minWidth: 0,
+              overflow: 'hidden',
+            }}
+          >
+            <BottomWidgets />
           </div>
         </div>
       </div>
@@ -329,11 +385,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col">
       <HeaderGate />
       <div key={pagePhase} className="page-enter flex-1 min-h-0">
         {renderPageContent()}
       </div>
+      {!isRestoringAuth ? <AddFundsDrawer /> : null}
     </div>
   )
 }
