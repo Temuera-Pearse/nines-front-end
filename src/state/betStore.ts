@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { placeBet as placeBetApi } from '../api/bets'
+import { getDefaultHorseIds } from '../constants/raceParticipants'
 import { useRaceStore } from './raceStore'
 
 const USDC_MINOR_UNITS = 1_000_000
@@ -29,10 +30,15 @@ export const useBetStore = create<BetState>((set, get) => ({
 
   placeBet: async () => {
     const { selectedHorse, amount } = get()
-    const { raceId } = useRaceStore.getState()
+    const { horses, raceId } = useRaceStore.getState()
 
     if (!raceId) throw new Error('No active race')
     if (!selectedHorse) throw new Error('No horse selected')
+    const validSelectionIds =
+      horses.length > 0 ? horses.map((horse) => horse.id) : getDefaultHorseIds()
+    if (!validSelectionIds.includes(selectedHorse)) {
+      throw new Error('Invalid horse selection')
+    }
     if (amount <= 0) throw new Error('Bet amount must be greater than 0')
 
     await placeBetApi({

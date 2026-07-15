@@ -4,6 +4,7 @@ import { useBetStore } from '../state/betStore'
 import { BetSlip } from '../components/BetSlip/BetSlip'
 import { Card } from '../components/UI/Card'
 import { getHorseIdentity } from '../utils/raceHelpers'
+import './BettingPage.css'
 
 // Precise clock hook at 50ms resolution
 function useClockMs() {
@@ -37,14 +38,16 @@ export const BettingPage: React.FC = () => {
   const betsOpen = status === 'betsOpen'
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="betting-page container mx-auto px-4 py-6">
       {/* Hero countdown */}
       <div className="text-center mb-6">
         <h1 className="text-4xl font-black mb-1 text-gray-800">
           Place Your Bets
         </h1>
         {raceId && (
-          <div className="text-xs font-mono text-gray-400">{raceId}</div>
+          <div className="betting-page__race-id text-xs font-mono text-gray-400">
+            {raceId}
+          </div>
         )}
 
         {/* Big countdown */}
@@ -92,7 +95,7 @@ export const BettingPage: React.FC = () => {
                     key={horse.id}
                     onClick={() => setSelectedHorse(horse.id)}
                     disabled={!betsOpen}
-                    className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    className={`betting-page__horse-button p-3 rounded-xl border-2 transition-all text-left ${
                       isSelected
                         ? 'border-blue-600 bg-blue-50 shadow-md scale-[1.02]'
                         : 'border-gray-200 hover:border-gray-400 bg-white'
@@ -113,7 +116,9 @@ export const BettingPage: React.FC = () => {
                         <div className="font-bold text-gray-800 truncate">
                           {identity.name}
                         </div>
-                        <div className="text-xs text-gray-400">{horse.id}</div>
+                        <div className="betting-page__horse-id text-xs text-gray-400">
+                          {horse.id}
+                        </div>
                       </div>
                       {isSelected && (
                         <span className="text-blue-600 font-bold text-lg">

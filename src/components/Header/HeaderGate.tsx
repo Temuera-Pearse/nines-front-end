@@ -21,13 +21,14 @@ const HeaderLoadingState: React.FC = React.memo(function HeaderLoadingState() {
 })
 
 export const HeaderGate: React.FC = React.memo(function HeaderGate() {
-  const { isAuthenticated, isLoading } = useAppAuth()
+  const { hasConfirmedPlayer, isLoading, isPlayerVerificationLoading } =
+    useAppAuth()
 
-  if (isLoading) {
+  if (isLoading || isPlayerVerificationLoading) {
     return <HeaderLoadingState />
   }
 
-  if (isAuthenticated) {
+  if (hasConfirmedPlayer) {
     return <AppHeader />
   }
 

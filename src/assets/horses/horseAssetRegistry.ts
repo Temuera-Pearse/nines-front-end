@@ -5,6 +5,8 @@ export type HorseAnimationState =
   | 'finish'
   | 'shadow'
 
+import { HORSE_COUNT } from '../../constants/raceParticipants'
+
 export interface SharedHorseAnimationManifest {
   state: HorseAnimationState
   folder: string
@@ -52,7 +54,7 @@ export const SHARED_HORSE_ANIMATIONS: SharedHorseAnimationManifest[] = [
   },
 ]
 
-export const HORSE_SKINS: HorseSkinManifest[] = [
+const ALL_HORSE_SKINS: HorseSkinManifest[] = [
   {
     horseId: 'horse-0',
     folder: 'src/assets/horses/skins/horse-0',
@@ -114,3 +116,11 @@ export const HORSE_SKINS: HorseSkinManifest[] = [
     expectedFiles: ['silks.png', 'badge.svg'],
   },
 ]
+
+export const HORSE_SKINS: HorseSkinManifest[] = ALL_HORSE_SKINS.slice(
+  0,
+  HORSE_COUNT,
+)
+
+export const LEGACY_HORSE_SKINS: HorseSkinManifest[] =
+  ALL_HORSE_SKINS.slice(HORSE_COUNT)

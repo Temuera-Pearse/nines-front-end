@@ -1,0 +1,33 @@
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .betting-page {
+    padding: 14px 12px;
+  }
+
+  .betting-page h1 {
+    font-size: 2rem;
+    line-height: 1.05;
+  }
+
+  .betting-page__race-id,
+  .betting-page__horse-id {
+    display: none;
+  }
+
+  .betting-page .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .betting-page__horse-button,
+  .betting-page button {
+    min-height: 44px;
+  }
+
+  .betting-page input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .betting-page .max-w-md {
+    max-width: none;
+  }
+}

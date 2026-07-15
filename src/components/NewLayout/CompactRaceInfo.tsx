@@ -1,4 +1,5 @@
 import React from 'react'
+import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { useRaceStore } from '../../state/raceStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 
@@ -29,13 +30,14 @@ export const CompactRaceInfo: React.FC = () => {
   const { raceId, horses } = useRaceStore()
   const headerTiming = useRaceHeaderTiming()
 
-  const runnerCount = horses.length > 0 ? horses.length : 10
+  const runnerCount = horses.length > 0 ? horses.length : HORSE_COUNT
   const totalPool = 0
   const housePct = 15
   const netPool = Math.round(totalPool * (1 - housePct / 100))
 
   return (
     <div
+      className="compact-race-info"
       style={{
         background:
           'linear-gradient(135deg, #fff9f0 0%, #fff 50%, #f0f7ff 100%)',
@@ -55,9 +57,11 @@ export const CompactRaceInfo: React.FC = () => {
       />
 
       <div
+        className="compact-race-info__content"
         style={{ display: 'flex', alignItems: 'center', padding: '6px 14px' }}
       >
         <div
+          className="compact-race-info__race-block"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -67,6 +71,7 @@ export const CompactRaceInfo: React.FC = () => {
           }}
         >
           <div
+            className="compact-race-info__race-chip"
             style={{
               background: 'linear-gradient(135deg, #4f8ef7, #6c63ff)',
               borderRadius: '12px',
@@ -74,7 +79,11 @@ export const CompactRaceInfo: React.FC = () => {
               boxShadow: '0 2px 0 #3b5fc0',
             }}
           >
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: '10px' }}>
+            <span
+              className="compact-race-info__race-chip-text"
+              style={{ color: '#fff', fontWeight: 900, fontSize: '10px' }}
+              title={raceId ?? 'RACE'}
+            >
               {raceId ?? 'RACE'}
             </span>
           </div>
@@ -84,6 +93,7 @@ export const CompactRaceInfo: React.FC = () => {
         </div>
 
         <div
+          className="compact-race-info__timer-block"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -126,6 +136,7 @@ export const CompactRaceInfo: React.FC = () => {
         </div>
 
         <div
+          className="compact-race-info__pool-block"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -152,6 +163,7 @@ export const CompactRaceInfo: React.FC = () => {
         </div>
 
         <div
+          className="compact-race-info__state-block"
           style={{
             paddingLeft: '14px',
             display: 'flex',

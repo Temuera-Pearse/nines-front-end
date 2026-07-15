@@ -61,6 +61,14 @@
   overflow: hidden;
 }
 
+.nines-header-public-race-row {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
 .nines-header-race-block {
   display: flex;
   align-items: center;
@@ -196,6 +204,17 @@
   min-width: 0;
 }
 
+.nines-auth-error {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .nines-header-center {
   display: flex;
   align-items: center;
@@ -277,7 +296,7 @@
 }
 
 .nines-header-button {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
   font-size: 13px;
@@ -333,7 +352,7 @@
 }
 
 .nines-header-menu-button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.28);
@@ -358,7 +377,9 @@
 
 .nines-header-avatar {
   width: 40px;
-  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  height: 44px;
   border-radius: 16px;
   display: inline-flex;
   align-items: center;
@@ -437,6 +458,13 @@
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.nines-dropdown-user-role {
+  color: #86efac;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
 }
 
 .nines-dropdown-user-balance {
@@ -552,10 +580,21 @@
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .nines-header-shell {
+    padding: 10px 10px 8px;
+  }
+
+  .nines-header-frame {
+    min-height: 0;
+    border-radius: 16px;
+    padding: 10px;
+  }
+
   .nines-header-primary-row {
     flex-wrap: wrap;
     align-items: flex-start;
+    gap: 10px;
   }
 
   .nines-header-center {
@@ -565,8 +604,30 @@
     flex-wrap: wrap;
   }
 
+  .nines-header-public-race-row {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .nines-header-actions {
     margin-left: auto;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .nines-header-race-chip {
+    max-width: 94px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nines-header-race-block--stats .nines-header-stat:nth-child(2),
+  .nines-header-race-block--stats .nines-header-stat:nth-child(3),
+  .nines-header-race-block--stats .nines-header-stat:nth-child(5),
+  .nines-header-race-block--stats .nines-header-stat:nth-child(6) {
+    display: none;
   }
 
   .nines-header-race-row {

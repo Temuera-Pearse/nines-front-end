@@ -21,7 +21,13 @@ function joinUrl(base: string, path: string): string {
   return `${baseClean}${pathClean}`
 }
 
-export const API_BASE_URL: string = import.meta.env.VITE_API_URL ?? ''
+function readStringEnv(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+export const API_BASE_URL: string =
+  readStringEnv(import.meta.env.VITE_NINES_BACKEND_URL) ||
+  readStringEnv(import.meta.env.VITE_API_URL)
 
 export const API_TOKEN: string | undefined = import.meta.env.VITE_API_TOKEN
 
@@ -47,10 +53,12 @@ function toQueryString(
   return qs ? `?${qs}` : ''
 }
 
-// You can override the WebSocket URL completely via VITE_WS_URL.
+// You can override the WebSocket URL completely via VITE_NINES_WS_URL.
 // Otherwise we derive it from API_BASE_URL + VITE_WS_PATH (default: /ws).
 export const WS_URL: string = (() => {
-  const explicit = import.meta.env.VITE_WS_URL
+  const explicit =
+    readStringEnv(import.meta.env.VITE_NINES_WS_URL) ||
+    readStringEnv(import.meta.env.VITE_WS_URL)
   const mode = import.meta.env.VITE_WS_MODE
   const binaryRaw = import.meta.env.VITE_WS_BINARY
 

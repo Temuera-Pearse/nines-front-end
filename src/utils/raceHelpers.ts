@@ -1,11 +1,12 @@
-export const VISUAL_TRACK_LENGTH_METERS = 1400
-export const VISUAL_START_LINE_METERS = 200
+import {
+  FINISH_Y,
+  RACE_DISTANCE_Y,
+  START_Y,
+  TRACK_HEIGHT,
+} from '../constants/raceTrack'
+import { HORSE_COUNT } from '../constants/raceParticipants'
+
 export const OFFICIAL_RACE_DISTANCE_METERS = 1000
-export const VISUAL_FINISH_LINE_METERS =
-  VISUAL_START_LINE_METERS + OFFICIAL_RACE_DISTANCE_METERS
-export const VISUAL_RUNOFF_DISTANCE_METERS =
-  VISUAL_TRACK_LENGTH_METERS - VISUAL_FINISH_LINE_METERS
-export const VISUAL_OFFSCREEN_OVERSHOOT_METERS = 60
 
 const DEFAULT_TRACK_LENGTH_METERS = OFFICIAL_RACE_DISTANCE_METERS
 const DEFAULT_FINISH_LINE_METERS = OFFICIAL_RACE_DISTANCE_METERS
@@ -41,23 +42,16 @@ export function getRaceVisualMetrics(
     safeTrackLength,
   )
   const raceDistanceMeters = Math.min(safeFinishLine, safeTrackLength)
-  const visualTrackLengthMeters =
-    VISUAL_START_LINE_METERS +
-    raceDistanceMeters +
-    VISUAL_RUNOFF_DISTANCE_METERS
-
   return {
-    startProgress: VISUAL_START_LINE_METERS / visualTrackLengthMeters,
-    finishProgress:
-      (VISUAL_START_LINE_METERS + raceDistanceMeters) /
-      visualTrackLengthMeters,
+    startProgress: START_Y / TRACK_HEIGHT,
+    finishProgress: FINISH_Y / TRACK_HEIGHT,
     raceDistanceMeters,
-    visualTrackLengthMeters,
+    visualTrackLengthMeters: TRACK_HEIGHT,
   }
 }
 
 // ─── Horse identity catalogue ────────────────────────────────────────────────
-// Each slot maps to horse-0 … horse-9 from the backend.
+// Active slots map to horse-0 … horse-8 from the backend.
 export interface HorseIdentity {
   number: number // race number (1-based, displayed on badge)
   name: string
@@ -112,15 +106,27 @@ export const HORSE_IDENTITIES: HorseIdentity[] = [
     tailwind: 'bg-orange-500',
   },
   { number: 9, name: 'Teal Comet', hex: '#14b8a6', tailwind: 'bg-teal-500' },
-  { number: 10, name: 'Cyan Flash', hex: '#06b6d4', tailwind: 'bg-cyan-500' },
 ]
 
+const LEGACY_HORSE_IDENTITIES: Record<string, HorseIdentity> = {
+  'horse-9': {
+    number: 10,
+    name: 'Cyan Flash',
+    hex: '#06b6d4',
+    tailwind: 'bg-cyan-500',
+  },
+}
+
 export function getHorseIdentity(horseId: string): HorseIdentity {
+  const legacyIdentity = LEGACY_HORSE_IDENTITIES[horseId]
+  if (legacyIdentity) return legacyIdentity
+
   const raw = Number(horseId.split('-')[1])
   const index = Number.isFinite(raw) ? raw : 0
+  const activeIdentityCount = Math.min(HORSE_COUNT, HORSE_IDENTITIES.length)
   return HORSE_IDENTITIES[
-    ((index % HORSE_IDENTITIES.length) + HORSE_IDENTITIES.length) %
-      HORSE_IDENTITIES.length
+    ((index % activeIdentityCount) + activeIdentityCount) %
+      activeIdentityCount
   ]
 }
 
@@ -157,40 +163,53 @@ export function describeRaceEvent(
 }
 
 /**
- * Backend positions are in meters (0..trackLength). Convert to 0..100%.
+ * Backend positions are in meters. Convert them into fixed race-world progress.
  */
 export function positionToPercentage(
   positionMeters: number,
   trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
   finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
 ): number {
-  const { startProgress, raceDistanceMeters, visualTrackLengthMeters } =
-    getRaceVisualMetrics(trackLengthMeters, finishLineMeters)
-  if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
-    return startProgress * 100
-  }
-
-  const visualMeters =
-    VISUAL_START_LINE_METERS + clamp(positionMeters, 0, raceDistanceMeters)
-
-  return clamp((visualMeters / visualTrackLengthMeters) * 100, 0, 100)
+  return (
+    positionToProgress(positionMeters, trackLengthMeters, finishLineMeters) *
+    100
+  )
 }
 
 export function positionToProgress(
   positionMeters: number,
-  trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
+  _trackLengthMeters: number = DEFAULT_TRACK_LENGTH_METERS,
   finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
 ): number {
-  const { startProgress, raceDistanceMeters, visualTrackLengthMeters } =
-    getRaceVisualMetrics(trackLengthMeters, finishLineMeters)
+  return positionToRaceProgress(positionMeters, finishLineMeters)
+}
+
+export function positionToRaceProgress(
+  positionMeters: number,
+  finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
+): number {
+  const safeFinishLine = normalizePositiveNumber(
+    finishLineMeters,
+    DEFAULT_FINISH_LINE_METERS,
+  )
   if (!Number.isFinite(positionMeters) || positionMeters <= 0) {
-    return startProgress
+    return 0
   }
 
-  const visualMeters =
-    VISUAL_START_LINE_METERS + clamp(positionMeters, 0, raceDistanceMeters)
+  return clamp(positionMeters / safeFinishLine, 0, 1)
+}
 
-  return clamp(visualMeters / visualTrackLengthMeters, 0, 1)
+export function raceProgressToWorldY(progress: number): number {
+  return START_Y - clamp(progress, 0, 1) * RACE_DISTANCE_Y
+}
+
+export function positionToWorldY(
+  positionMeters: number,
+  finishLineMeters: number = DEFAULT_FINISH_LINE_METERS,
+): number {
+  return raceProgressToWorldY(
+    positionToRaceProgress(positionMeters, finishLineMeters),
+  )
 }
 
 export function getHorseColor(horseId: string): string {

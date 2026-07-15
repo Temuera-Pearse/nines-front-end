@@ -205,11 +205,11 @@ export const BettingLeaderboard: React.FC<BettingLeaderboardProps> = React.memo(
                     ) : (
                       <div className="betting-inline-guard">
                         <div className="betting-inline-guard__title">
-                          Log in to place bets
+                          Please log in
                         </div>
                         <div className="betting-inline-guard__copy">
-                          Betting controls are hidden until you are
-                          authenticated.
+                          Betting info and controls are unavailable until you
+                          are authenticated.
                         </div>
                         <div className="betting-inline-guard__actions">
                           <button

@@ -381,13 +381,13 @@
 
 .betting-panel__input {
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: rgba(15, 23, 42, 0.82);
   color: #f8fafc;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -403,7 +403,7 @@
 }
 
 .betting-panel__quick-bet {
-  min-height: 34px;
+  min-height: 44px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: rgba(30, 41, 59, 0.88);
@@ -453,7 +453,7 @@
 
 .betting-panel__cta {
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   border: 0;
   border-radius: 12px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -548,7 +548,58 @@
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .betting-area,
+  .betting-area > .betting-card {
+    height: auto;
+  }
+
+  .betting-card {
+    border-radius: 14px;
+  }
+
+  .betting-card__header {
+    padding: 10px 12px;
+  }
+
+  .betting-card__subtitle,
+  .betting-leaderboard__meta {
+    display: none;
+  }
+
+  .betting-card__pill {
+    min-height: 32px;
+  }
+
+  .betting-leaderboard__list {
+    flex: 0 1 auto;
+    max-height: none;
+    overflow-y: visible;
+    padding: 8px;
+  }
+
+  .betting-leaderboard__row {
+    min-height: 44px;
+    border-radius: 10px;
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .betting-leaderboard__row--with-stats {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+
+  .betting-leaderboard__stat-block {
+    gap: 6px;
+  }
+
+  .betting-leaderboard__stat:not(:last-child) {
+    display: none;
+  }
+
+  .betting-leaderboard__expanded-row {
+    margin: -1px 2px 0 8px;
+  }
+
   .betting-panel__quick-bets {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

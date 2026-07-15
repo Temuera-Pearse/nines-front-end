@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAppAuth } from './auth/AppAuthProvider'
 import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
+import { getDefaultHorseIds } from './constants/raceParticipants'
 import {
   getRaceConfig,
   getRaceCurrent,
@@ -10,17 +11,16 @@ import {
 } from './api/race'
 import { OFFLINE_MODE } from './config/runtime'
 import { HeaderGate } from './components/Header/HeaderGate'
-import { BettingArea } from './components/BettingArea/BettingArea'
 import { AddFundsDrawer } from './components/Funding/AddFundsDrawer'
-import { OnTrackEventsCard } from './components/NewLayout/OnTrackEventsCard'
-import { BottomWidgets } from './components/NewLayout/BottomWidgets'
-import { RaceTrack } from './components/RaceTrack/RaceTrack'
-import { ResultsPanel } from './components/ResultsPanel/ResultsPanel'
 import { useRaceLifecycle } from './state/useRaceLifecycle'
 import {
   selectResultsStandings,
   selectResultsWinner,
 } from './state/raceSelectors'
+import { useMediaQuery } from './hooks/useMediaQuery'
+import { DesktopLayout } from './layouts/desktop/DesktopLayout'
+import { MobileLayout } from './layouts/mobile/MobileLayout'
+import './App.css'
 
 /**
  * Derive the visible page from wall-clock UTC seconds.
@@ -41,11 +41,14 @@ const AppLoadingState: React.FC<{ message: string }> = ({ message }) => (
 )
 
 function App() {
-  const { isEnabled, isLoading } = useAppAuth()
+  const { hasConfirmedPlayer, isEnabled, isLoading } = useAppAuth()
   const status = useRaceStore((s) => s.status)
   const raceId = useRaceStore((s) => s.raceId)
   const resultsWinner = useRaceStore(selectResultsWinner)
   const resultsStandings = useRaceStore(selectResultsStandings)
+  const isMobileLayout = useMediaQuery(
+    '(max-width: 768px), (max-width: 1024px) and (orientation: portrait)',
+  )
   const {
     showFinishAnimation,
     showResultsPanel,
@@ -113,8 +116,8 @@ function App() {
       const store = useRaceStore.getState()
       if (store.horses.length === 0) {
         store.setHorses(
-          Array.from({ length: 10 }, (_, i) => ({
-            id: `horse-${i}`,
+          getDefaultHorseIds().map((id) => ({
+            id,
             position: 0,
           })),
         )
@@ -207,8 +210,8 @@ function App() {
 
         if (useRaceStore.getState().horses.length === 0) {
           store.setHorses(
-            Array.from({ length: 10 }, (_, i) => ({
-              id: `horse-${i}`,
+            getDefaultHorseIds().map((id) => ({
+              id,
               position: 0,
             })),
           )
@@ -248,149 +251,38 @@ function App() {
       return <AppLoadingState message="Connecting to race server..." />
     }
 
+    const layoutProps = {
+      showFinishAnimation,
+      showResultsPanel,
+      resultsWinner,
+      resultsStandings,
+      resultsCountdownSeconds,
+      onCompleteResultsPhase: completeResultsPhase,
+    }
+
     return (
-      <div
-        style={{
-          height: '100%',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          background:
-            'linear-gradient(165deg, #020617 0%, #0f172a 36%, #111827 70%, #172554 100%)',
-          fontFamily: "'Nunito', sans-serif",
-          position: 'relative',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '10%',
-              left: '-4%',
-              width: '280px',
-              height: '280px',
-              borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 72%)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: '-6%',
-              width: '340px',
-              height: '340px',
-              borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 72%)',
-            }}
-          />
+      <div className="nines-race-shell">
+        <div className="nines-race-backdrop">
+          <div className="nines-race-backdrop-glow nines-race-backdrop-glow--blue" />
+          <div className="nines-race-backdrop-glow nines-race-backdrop-glow--cyan" />
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            position: 'relative',
-            zIndex: 1,
-            display: 'grid',
-            gridTemplateColumns: '28% minmax(0, 1fr) 24%',
-            gridTemplateRows: 'minmax(0, 1fr) auto',
-            gap: '10px',
-            padding: '8px 16px 8px',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              gridColumn: '1',
-              gridRow: '1 / span 2',
-              minWidth: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <BettingArea />
-          </div>
-
-          <div
-            style={{
-              gridColumn: '2',
-              gridRow: '1',
-              minWidth: 0,
-              minHeight: 0,
-              height: '100%',
-              maxHeight: '100%',
-              overflow: 'hidden',
-              position: 'relative',
-            }}
-          >
-            <RaceTrack showFinishAnimation={showFinishAnimation} />
-            {showResultsPanel && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 30,
-                  pointerEvents: 'auto',
-                }}
-              >
-                <ResultsPanel
-                  isVisible={showResultsPanel}
-                  winner={resultsWinner}
-                  standings={resultsStandings}
-                  nextRaceStartsInSeconds={resultsCountdownSeconds}
-                  onComplete={completeResultsPhase}
-                />
-              </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              gridColumn: '3',
-              gridRow: '1',
-              minWidth: 0,
-              minHeight: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <OnTrackEventsCard />
-          </div>
-
-          <div
-            style={{
-              gridColumn: '2 / 4',
-              gridRow: '2',
-              minWidth: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <BottomWidgets />
-          </div>
-        </div>
+        {isMobileLayout ? (
+          <MobileLayout {...layoutProps} />
+        ) : (
+          <DesktopLayout {...layoutProps} />
+        )}
       </div>
     )
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col">
+    <div className="nines-app-root h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col">
       <HeaderGate />
       <div key={pagePhase} className="page-enter flex-1 min-h-0">
         {renderPageContent()}
       </div>
-      {!isRestoringAuth ? <AddFundsDrawer /> : null}
+      {hasConfirmedPlayer && !isRestoringAuth ? <AddFundsDrawer /> : null}
     </div>
   )
 }

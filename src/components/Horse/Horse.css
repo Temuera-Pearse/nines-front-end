@@ -6,8 +6,8 @@
 
 .horse {
   position: absolute;
-  top: 61%;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: center;
   /* NO css transition — rAF handles smoothing */
-  will-change: left;
+  will-change: top;
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 

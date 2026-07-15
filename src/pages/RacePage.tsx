@@ -5,6 +5,7 @@ import { Leaderboard } from '../components/Leaderboard/Leaderboard'
 import { Card } from '../components/UI/Card'
 import { getHorseIdentity } from '../utils/raceHelpers'
 import { useRaceLifecycle } from '../state/useRaceLifecycle'
+import './RacePage.css'
 
 function useClockMs() {
   const [ms, setMs] = useState(() => {
@@ -58,11 +59,11 @@ export const RacePage: React.FC = () => {
     : null
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="race-page container mx-auto px-4 py-6">
       {/* Header card */}
       <div className="mb-4">
         <Card>
-          <div className="grid grid-cols-3 items-center">
+          <div className="race-page__header-grid grid grid-cols-3 items-center">
             {/* Left section - 30% */}
             <div>
               {isPreRace ? (
@@ -166,7 +167,7 @@ export const RacePage: React.FC = () => {
             </div>
 
             {/* Right section - 30% */}
-            <div className="text-right">
+            <div className="race-page__header-timer text-right">
               {isPreRace ? (
                 <>
                   <div className="text-xs text-gray-400 uppercase tracking-wider">
@@ -210,12 +211,12 @@ export const RacePage: React.FC = () => {
       </div>
 
       {/* Five-column layout: leaderboard + leaderboard + track + leaderboard + leaderboard */}
-      <div className="flex gap-4 items-start">
+      <div className="race-page__layout flex gap-4 items-start">
         {/* Left leaderboards */}
-        <div className="w-52 flex-shrink-0">
+        <div className="race-page__sidebar w-52 flex-shrink-0">
           <Leaderboard />
         </div>
-        <div className="w-52 flex-shrink-0">
+        <div className="race-page__sidebar w-52 flex-shrink-0">
           <div className="leaderboard">
             <div className="leaderboard-title">Win Pool</div>
             <div className="space-y-2">
@@ -295,14 +296,14 @@ export const RacePage: React.FC = () => {
         </div>
 
         {/* Track — takes most of the width */}
-        <div className="flex-1 min-w-0">
+        <div className="race-page__track flex-1 min-w-0">
           <Card className="p-0">
             <RaceTrack showFinishAnimation={showFinishAnimation} />
           </Card>
         </div>
 
         {/* Right leaderboards */}
-        <div className="w-52 flex-shrink-0">
+        <div className="race-page__sidebar w-52 flex-shrink-0">
           <div className="leaderboard">
             <div className="leaderboard-title">Your Bet</div>
             <div className="space-y-2">
@@ -336,7 +337,7 @@ export const RacePage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="w-52 flex-shrink-0">
+        <div className="race-page__sidebar w-52 flex-shrink-0">
           <div className="leaderboard">
             <div className="leaderboard-title">Market Activity</div>
             <div className="space-y-1 text-xs">

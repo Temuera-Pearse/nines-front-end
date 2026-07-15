@@ -2,17 +2,15 @@ import React, { useEffect, useLayoutEffect, useRef } from 'react'
 import {
   getHorseIdentity,
   getRaceEventLabel,
-  positionToProgress,
+  positionToWorldY,
 } from '../../utils/raceHelpers'
+import { START_Y } from '../../constants/raceTrack'
 import './Horse.css'
-
-const HORSE_W = 20
 
 interface HorseProps {
   id: string
   position: number
   laneNumber: number
-  trackLengthMeters?: number
   finishLineMeters?: number
   interpolationEnabled?: boolean
   activeEventIds?: string[]
@@ -24,17 +22,15 @@ export const Horse: React.FC<HorseProps> = ({
   id,
   position,
   laneNumber,
-  trackLengthMeters = 1000,
   finishLineMeters = 1000,
   interpolationEnabled = true,
   activeEventIds = [],
   isStunned = false,
   isRemoved = false,
 }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const horseRef = useRef<HTMLDivElement | null>(null)
 
-  // Keep a mutable ref to the *target* left-px so the rAF loop can interpolate
+  // Keep a mutable ref to the target top-px so the rAF loop can interpolate.
   const targetRef = useRef<number>(0)
   const currentRef = useRef<number>(0)
   const segmentStartRef = useRef<number>(0)
@@ -59,20 +55,7 @@ export const Horse: React.FC<HorseProps> = ({
 
   // Compute target px from new position prop; snap on reset / first tick
   useLayoutEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const progress = positionToProgress(
-      position,
-      trackLengthMeters,
-      finishLineMeters,
-    )
-    const trackWidth = container.clientWidth
-    const maxLeft = Math.max(0, trackWidth - HORSE_W)
-    const newTarget = Math.min(
-      maxLeft,
-      Math.max(0, progress * trackWidth - HORSE_W),
-    )
+    const newTarget = positionToWorldY(position, finishLineMeters)
     targetRef.current = newTarget
 
     if (!interpolationEnabled) {
@@ -81,7 +64,7 @@ export const Horse: React.FC<HorseProps> = ({
       segmentFromRef.current = newTarget
       segmentStartedAtRef.current = performance.now()
       const horse = horseRef.current
-      if (horse) horse.style.left = `${newTarget.toFixed(2)}px`
+      if (horse) horse.style.top = `${newTarget.toFixed(2)}px`
       return
     }
 
@@ -96,7 +79,7 @@ export const Horse: React.FC<HorseProps> = ({
       lastUpdateAtRef.current = null
       hadNonZeroRef.current = false
       const horse = horseRef.current
-      if (horse) horse.style.left = `${newTarget.toFixed(2)}px`
+      if (horse) horse.style.top = `${newTarget.toFixed(2)}px`
       return
     }
 
@@ -109,7 +92,7 @@ export const Horse: React.FC<HorseProps> = ({
       hadNonZeroRef.current = true
       lastUpdateAtRef.current = now
       const horse = horseRef.current
-      if (horse) horse.style.left = `${newTarget.toFixed(2)}px`
+      if (horse) horse.style.top = `${newTarget.toFixed(2)}px`
       return
     }
 
@@ -134,7 +117,7 @@ export const Horse: React.FC<HorseProps> = ({
     segmentDurationRef.current = nextDuration
     lastUpdateAtRef.current = now
     hadNonZeroRef.current = true
-  }, [finishLineMeters, interpolationEnabled, position, trackLengthMeters])
+  }, [finishLineMeters, interpolationEnabled, position])
 
   // rAF loop: lerp currentRef → targetRef and write directly to DOM
   useEffect(() => {
@@ -145,7 +128,7 @@ export const Horse: React.FC<HorseProps> = ({
       }
       const horse = horseRef.current
       if (horse) {
-        horse.style.left = `${targetRef.current.toFixed(2)}px`
+        horse.style.top = `${targetRef.current.toFixed(2)}px`
       }
       return
     }
@@ -170,7 +153,7 @@ export const Horse: React.FC<HorseProps> = ({
           if (progress >= 1) currentRef.current = targetRef.current
         }
 
-        horse.style.left = `${currentRef.current.toFixed(2)}px`
+        horse.style.top = `${currentRef.current.toFixed(2)}px`
       }
       rafRef.current = requestAnimationFrame(animate)
     }
@@ -183,43 +166,15 @@ export const Horse: React.FC<HorseProps> = ({
     }
   }, [interpolationEnabled])
 
-  // Keep track width in sync on resize
-  useLayoutEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const ro = new ResizeObserver(() => {
-      const progress = positionToProgress(
-        position,
-        trackLengthMeters,
-        finishLineMeters,
-      )
-      const trackWidth = container.clientWidth
-      const maxLeft = Math.max(0, trackWidth - HORSE_W)
-      const resizedTarget = Math.min(
-        maxLeft,
-        Math.max(0, progress * trackWidth - HORSE_W),
-      )
-      targetRef.current = resizedTarget
-      currentRef.current = resizedTarget
-      segmentFromRef.current = resizedTarget
-      segmentStartRef.current = resizedTarget
-      segmentDurationRef.current = 0
-      const horse = horseRef.current
-      if (horse) horse.style.left = `${resizedTarget.toFixed(2)}px`
-    })
-    ro.observe(container)
-    return () => ro.disconnect()
-  }, [finishLineMeters, position, trackLengthMeters])
-
   return (
-    <div className="horse-container" ref={containerRef}>
+    <div className="horse-container">
       <div
         ref={horseRef}
         className={`horse${isStunned ? ' horse--stunned' : ''}${isRemoved ? ' horse--removed' : ''}`}
         style={{
           backgroundColor: identity.hex,
           boxShadow: `0 2px 8px ${identity.hex}66`,
-          left: '0px',
+          top: `${START_Y}px`,
         }}
       >
         {/* Number badge */}

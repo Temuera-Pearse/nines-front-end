@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppAuth } from '../../auth/AppAuthProvider'
+import { getDefaultHorseIds } from '../../constants/raceParticipants'
 import { useBetStore } from '../../state/betStore'
 import { useRaceStore } from '../../state/raceStore'
 import { getHorseIdentity } from '../../utils/raceHelpers'
@@ -10,7 +11,7 @@ const HOUSE_PCT = 0.15
 export const QUICK_BETS = [5, 10, 25, 50, 100]
 
 export function useBettingAreaModel() {
-  const { isAuthenticated, login, signup } = useAppAuth()
+  const { hasConfirmedPlayer, login, signup } = useAppAuth()
   const { horses, status, winnerBannerHorseId, placements } = useRaceStore()
   const { selectedHorse, amount, placeBet, setAmount, setSelectedHorse } =
     useBetStore()
@@ -18,8 +19,8 @@ export function useBettingAreaModel() {
   const [message, setMessage] = useState('')
 
   const entries = useMemo<BettingEntry[]>(() => {
-    const fallbackRows = Array.from({ length: 10 }, (_, index) => ({
-      id: `horse-${index}`,
+    const fallbackRows = getDefaultHorseIds().map((id) => ({
+      id,
       position: 0,
     }))
     const baseRows = (horses.length ? horses : fallbackRows).slice()
@@ -83,6 +84,12 @@ export function useBettingAreaModel() {
 
   const handlePlaceBet = async () => {
     setMessage('')
+
+    if (!hasConfirmedPlayer) {
+      setMessage('Please log in to place bets')
+      return
+    }
+
     setPlacing(true)
     try {
       await placeBet()
@@ -98,7 +105,7 @@ export function useBettingAreaModel() {
     amount,
     entries,
     estimatedReturn,
-    isAuthenticated,
+    isAuthenticated: hasConfirmedPlayer,
     message,
     placing,
     quickBets: QUICK_BETS,

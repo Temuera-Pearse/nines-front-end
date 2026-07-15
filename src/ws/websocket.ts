@@ -8,6 +8,7 @@ import {
   useRaceStore,
 } from '../state/raceStore'
 import { OFFLINE_MODE, WS_URL } from '../config/runtime'
+import { getDefaultHorseIds } from '../constants/raceParticipants'
 
 type EventType =
   | 'bets:open'
@@ -612,9 +613,7 @@ class WebSocketService {
           store.setBetsCloseAtUtc(data.betsCloseAtUtc)
         }
         // Initialize horses
-        this.ensureHorsesInitialized(
-          Array.from({ length: 10 }, (_, i) => `horse-${i + 1}`),
-        )
+        this.ensureHorsesInitialized(getDefaultHorseIds())
         break
 
       case 'bets:close':

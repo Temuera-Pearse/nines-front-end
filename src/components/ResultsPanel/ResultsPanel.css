@@ -264,19 +264,24 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
   .results-panel {
-    width: min(100vw - 16px, 100%);
+    width: 100%;
+    max-height: min(72vh, 680px);
+    overflow-y: auto;
     padding: 16px;
+    border-radius: 16px;
   }
 
   .results-panel__header {
     flex-direction: column;
+    gap: 10px;
   }
 
   .results-panel__countdown {
     width: 100%;
     text-align: left;
+    min-height: 44px;
   }
 
   .results-panel__winner-main {
@@ -285,11 +290,18 @@
 
   .results-panel__standing-row {
     grid-template-columns: 36px 54px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
   }
 
   .results-panel__odds,
   .results-panel__payout {
     grid-column: span 1;
     text-align: left;
+  }
+
+  .results-panel__title,
+  .results-panel__winner-name {
+    font-size: 22px;
   }
 }

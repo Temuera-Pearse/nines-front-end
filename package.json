@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node --test",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
-    "verify": "npm run typecheck && npm run build",
+    "verify": "npm run typecheck && npm test && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

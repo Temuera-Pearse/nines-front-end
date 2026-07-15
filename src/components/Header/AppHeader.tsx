@@ -3,7 +3,9 @@ import { useAppAuth } from '../../auth/AppAuthProvider'
 import { useRaceStore } from '../../state/raceStore'
 import { formatUsdcBalance, useFundingStore } from '../../state/fundingStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
+import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { AccountDropdown } from './AccountDropdown'
+import { HeaderRaceTimer } from './HeaderRaceTimer'
 import { NinesLogo } from './NinesLogo'
 
 const MENU_HASHES: Record<string, string> = {
@@ -64,7 +66,7 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
   const [now, setNow] = useState(() => new Date())
   const menuBoundaryRef = useRef<HTMLDivElement | null>(null)
   const displayName = user?.name ?? 'Nines Player'
-  const runnerCount = horses.length > 0 ? horses.length : 10
+  const runnerCount = horses.length > 0 ? horses.length : HORSE_COUNT
   const totalPool = 0
   const housePct = 15
   const netPool = Math.round(totalPool * (1 - housePct / 100))
@@ -112,18 +114,7 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
               </span>
             </div>
 
-            <div className="nines-header-race-block nines-header-race-block--compact">
-              <span className="nines-header-race-muted">
-                {headerTiming.timerLabel}
-              </span>
-              {headerTiming.isLive ? (
-                <span className="nines-header-status-chip">Racing live</span>
-              ) : (
-                <span className="nines-header-countdown-chip">
-                  {headerTiming.timerValue}
-                </span>
-              )}
-            </div>
+            <HeaderRaceTimer />
 
             <div className="nines-header-race-block nines-header-race-block--stats">
               <HeaderStat

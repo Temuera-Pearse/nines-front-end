@@ -1,0 +1,41 @@
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .race-page {
+    padding: 12px;
+  }
+
+  .race-page__header-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .race-page__header-timer {
+    text-align: left;
+  }
+
+  .race-page__layout {
+    flex-direction: column;
+  }
+
+  .race-page__track {
+    order: 1;
+    width: 100%;
+    height: 640px;
+    overflow: hidden;
+  }
+
+  .race-page__sidebar {
+    width: 100%;
+  }
+
+  .race-page__sidebar button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .race-page .font-mono {
+    max-width: 12ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

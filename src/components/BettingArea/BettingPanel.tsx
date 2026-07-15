@@ -32,7 +32,11 @@ export const BettingPanel: React.FC<BettingPanelProps> = React.memo(
     onPlaceBet,
     onRegister,
   }) {
-    const { isAuthenticated } = useAppAuth()
+    const { hasConfirmedPlayer } = useAppAuth()
+
+    if (!hasConfirmedPlayer) {
+      return null
+    }
 
     return (
       <section className="betting-card">
@@ -41,7 +45,7 @@ export const BettingPanel: React.FC<BettingPanelProps> = React.memo(
             <div className="betting-card__eyebrow">Betting</div>
             <div className="betting-card__title">Dedicated bet slip</div>
             <div className="betting-card__subtitle">
-              {isAuthenticated
+              {hasConfirmedPlayer
                 ? 'Review the runner and place a quick win bet.'
                 : 'Watch the race live and unlock betting after sign in.'}
             </div>
@@ -84,7 +88,7 @@ export const BettingPanel: React.FC<BettingPanelProps> = React.memo(
             )}
           </div>
 
-          {isAuthenticated ? (
+          {hasConfirmedPlayer ? (
             <>
               <div className="betting-panel__field">
                 <label

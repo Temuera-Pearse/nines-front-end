@@ -1,0 +1,196 @@
+.nines-race-shell {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    165deg,
+    #020617 0%,
+    #0f172a 36%,
+    #111827 70%,
+    #172554 100%
+  );
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+}
+
+.nines-race-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.nines-race-backdrop-glow {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.nines-race-backdrop-glow--blue {
+  top: 10%;
+  left: -4%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.18) 0%,
+    transparent 72%
+  );
+}
+
+.nines-race-backdrop-glow--cyan {
+  top: 50%;
+  right: -6%;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.14) 0%,
+    transparent 72%
+  );
+}
+
+.nines-race-layout {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 28% minmax(0, 1fr) 24%;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 8px 16px;
+  overflow: hidden;
+}
+
+.nines-race-layout--guest {
+  grid-template-columns: 28% minmax(0, 1fr) 24%;
+}
+
+.nines-race-betting {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nines-race-track-panel {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.nines-race-mobile-status {
+  display: none;
+}
+
+.nines-race-results-region {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.nines-race-results-region .results-panel {
+  pointer-events: auto;
+}
+
+.nines-race-events {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nines-race-bottom-widgets {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nines-race-layout--guest .nines-race-track-panel,
+.nines-race-layout--guest .nines-race-results-region {
+  grid-column: 2;
+}
+
+.nines-race-layout--guest .nines-race-events {
+  grid-column: 3;
+}
+
+.nines-race-layout--guest .nines-race-bottom-widgets {
+  grid-column: 2 / 4;
+}
+
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .nines-app-root {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .nines-app-root > .page-enter {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .nines-race-shell {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .compact-race-info__content {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+  }
+
+  .compact-race-info__race-block {
+    flex: 1 1 145px;
+    padding-right: 8px;
+  }
+
+  .compact-race-info__race-chip {
+    max-width: 86px;
+  }
+
+  .compact-race-info__race-chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .compact-race-info__timer-block {
+    flex: 1 1 160px;
+    justify-content: flex-start;
+    padding: 0 8px;
+    border-right: 0;
+  }
+
+  .compact-race-info__pool-block {
+    display: none;
+  }
+
+  .compact-race-info__state-block {
+    width: 100%;
+    padding-left: 0;
+    justify-content: flex-start;
+  }
+}

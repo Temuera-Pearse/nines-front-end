@@ -18,6 +18,7 @@ export const UserHeader: React.FC<UserHeaderProps> = React.memo(
     const displayName = user?.name ?? 'Nines Player'
     const email = user?.email ?? 'Signed in'
     const initials = getInitials(displayName)
+    const role = user?.player?.roles[0]
 
     return (
       <div className="nines-dropdown-user-header" aria-hidden="true">
@@ -26,6 +27,11 @@ export const UserHeader: React.FC<UserHeaderProps> = React.memo(
         <div className="nines-dropdown-user-copy">
           <div className="nines-dropdown-user-name">{displayName}</div>
           <div className="nines-dropdown-user-email">{email}</div>
+          {role ? (
+            <div className="nines-dropdown-user-role">
+              {role === 'player' ? 'Player session confirmed' : role}
+            </div>
+          ) : null}
           {balancePreview ? (
             <div className="nines-dropdown-user-balance">{balancePreview}</div>
           ) : null}
