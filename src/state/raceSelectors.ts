@@ -17,21 +17,11 @@ export interface EventFeedEntry {
   usesHorseAccent: boolean
 }
 
-function oddsForHorse(_horseId: string): string {
-  return '—'
-}
-
-function payoutForHorse(horseId: string, winnerId: string | null): string {
-  return horseId === winnerId ? '—' : '—'
-}
-
 export function selectResultsStandings(state: RaceState): Standing[] {
   return state.placements.map((horseId, index) => ({
     position: index + 1,
     horseNumber: getHorseNumber(horseId),
     horseName: getHorseName(horseId),
-    odds: oddsForHorse(horseId),
-    payout: payoutForHorse(horseId, state.winner),
   }))
 }
 
@@ -43,8 +33,6 @@ export function selectResultsWinner(
   return {
     horseNumber: getHorseNumber(state.winner),
     horseName: getHorseName(state.winner),
-    odds: oddsForHorse(state.winner),
-    payout: payoutForHorse(state.winner, state.winner),
   }
 }
 

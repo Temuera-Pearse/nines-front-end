@@ -1,9 +1,17 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { useAppAuth } from '../../auth/AppAuthProvider'
 import './Header.css'
-import { AppHeader } from './AppHeader'
+import { PUBLIC_VIEWER_MODE } from '../../config/features'
 import { NinesLogo } from './NinesLogo'
 import { PublicHeader } from './PublicHeader'
+
+const PrivateAppHeader = !PUBLIC_VIEWER_MODE
+  ? React.lazy(() =>
+      import('./AppHeader').then((module) => ({
+        default: module.AppHeader,
+      })),
+    )
+  : null
 
 const HeaderLoadingState: React.FC = React.memo(function HeaderLoadingState() {
   return (
@@ -28,8 +36,12 @@ export const HeaderGate: React.FC = React.memo(function HeaderGate() {
     return <HeaderLoadingState />
   }
 
-  if (hasConfirmedPlayer) {
-    return <AppHeader />
+  if (PrivateAppHeader && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE) {
+    return (
+      <Suspense fallback={<HeaderLoadingState />}>
+        <PrivateAppHeader />
+      </Suspense>
+    )
   }
 
   return <PublicHeader />

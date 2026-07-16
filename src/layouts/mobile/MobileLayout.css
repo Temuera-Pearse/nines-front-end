@@ -13,10 +13,12 @@
 .nines-mobile-layout__status {
   position: relative;
   z-index: 4;
+  grid-row: 1;
 }
 
 .nines-mobile-layout__stage {
   position: relative;
+  grid-row: 2;
   min-height: 0;
   overflow: hidden;
   border-radius: 18px 18px 0 0;

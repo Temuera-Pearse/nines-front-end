@@ -30,7 +30,10 @@ describe('portrait mobile responsive layout contract', () => {
       appCss,
       /@media \(max-width: 768px\).*?\.nines-race-layout\s*{[^}]*flex-direction: column/s,
     )
-    assert.match(mobileLayout, /<MobileSelectionSheet timing=\{timing\} \/>/)
+    assert.match(
+      mobileLayout,
+      /\{PrivateMobileSelectionSheet && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE \?\s*\(\s*<Suspense fallback=\{null\}>[\s\S]*?<PrivateMobileSelectionSheet timing=\{timing\} \/>[\s\S]*?<\/Suspense>\s*\)\s*: null\}/s,
+    )
     assert.match(mobileLayout, /<RaceTrack showFinishAnimation=\{showFinishAnimation\} \/>/)
     assert.match(mobileCss, /\.nines-mobile-sheet\s*{[^}]*position: fixed/s)
     assert.match(mobileCss, /\.nines-mobile-sheet\s*{[^}]*env\(safe-area-inset-bottom\)/s)
@@ -46,7 +49,7 @@ describe('portrait mobile responsive layout contract', () => {
     assert.match(racePageCss, /\.race-page__track\s*{[^}]*height: 640px/s)
   })
 
-  it('gives guests the public leaderboard column without private betting stats', () => {
+  it('gives guests a public runner-order column without private controls', () => {
     assert.match(
       appCss,
       /\.nines-race-layout--guest\s*{[^}]*grid-template-columns: 28% minmax\(0, 1fr\) 24%/s,
@@ -66,7 +69,9 @@ describe('portrait mobile responsive layout contract', () => {
   })
 
   it('keeps track, betting controls, header controls, and results mobile-safe', () => {
-    assert.match(desktopLayout, /<BettingArea \/>/)
+    assert.match(desktopLayout, /<LiveRaceLeaderboard \/>/)
+    assert.match(desktopLayout, /const PrivateBettingArea = !PUBLIC_VIEWER_MODE/)
+    assert.match(desktopLayout, /import\('\.\.\/\.\.\/components\/BettingArea\/BettingArea'\)/)
     assert.match(desktopLayout, /<OnTrackEventsCard \/>/)
     assert.match(desktopLayout, /<BottomWidgets \/>/)
     assert.doesNotMatch(trackCss, /@media \(max-width: 768px\).*orientation: portrait/s)

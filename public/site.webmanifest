@@ -1,0 +1,9 @@
+{
+  "name": "Nines Live Racing",
+  "short_name": "Nines",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Watch Nines live races in real time."
+}

@@ -8,7 +8,7 @@ export const NinesLogo: React.FC = React.memo(function NinesLogo() {
       </span>
       <span className="nines-logo-text">
         <span className="nines-logo-wordmark">NINES</span>
-        <span className="nines-logo-subtitle">Premium racebook</span>
+          <span className="nines-logo-subtitle">Live racing</span>
       </span>
     </a>
   )

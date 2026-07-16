@@ -1,5 +1,43 @@
+import { IS_PRODUCTION } from './features'
+
 function isAbsoluteHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value)
+}
+
+function isAbsoluteWsUrl(value: string): boolean {
+  return /^wss?:\/\//i.test(value)
+}
+
+function isLocalNetworkUrl(value: string): boolean {
+  return /^(?:https?|wss?):\/\/(?:localhost|127\.0\.0\.1|192\.168\.)/i.test(
+    value,
+  )
+}
+
+function assertProductionHttpUrl(name: string, value: string): void {
+  if (!IS_PRODUCTION || !value) return
+  if (!isAbsoluteHttpUrl(value)) {
+    throw new Error(`${name} must be an absolute HTTPS URL in production`)
+  }
+  if (!value.startsWith('https://')) {
+    throw new Error(`${name} must use HTTPS in production`)
+  }
+  if (isLocalNetworkUrl(value)) {
+    throw new Error(`${name} must not use a local development host in production`)
+  }
+}
+
+function assertProductionWsUrl(name: string, value: string): void {
+  if (!IS_PRODUCTION || !value) return
+  if (!isAbsoluteWsUrl(value)) {
+    throw new Error(`${name} must be an absolute WSS URL in production`)
+  }
+  if (!value.startsWith('wss://')) {
+    throw new Error(`${name} must use WSS in production`)
+  }
+  if (isLocalNetworkUrl(value)) {
+    throw new Error(`${name} must not use a local development host in production`)
+  }
 }
 
 function toWsOrigin(httpOrigin: string): string {
@@ -30,6 +68,8 @@ export const API_BASE_URL: string =
   readStringEnv(import.meta.env.VITE_API_URL)
 
 export const API_TOKEN: string | undefined = import.meta.env.VITE_API_TOKEN
+
+assertProductionHttpUrl('VITE_NINES_BACKEND_URL/VITE_API_URL', API_BASE_URL)
 
 function parseBooleanEnv(value: unknown): boolean {
   if (value === undefined || value === null) return false
@@ -80,6 +120,7 @@ export const WS_URL: string = (() => {
   })
 
   if (explicit) {
+    assertProductionWsUrl('VITE_NINES_WS_URL/VITE_WS_URL', explicit)
     const separator = explicit.includes('?') ? '&' : '?'
     return wsQuery ? `${explicit}${separator}${wsQuery.slice(1)}` : explicit
   }
@@ -91,6 +132,7 @@ export const WS_URL: string = (() => {
   if (isAbsoluteHttpUrl(API_BASE_URL)) {
     const api = new URL(API_BASE_URL)
     const wsOrigin = toWsOrigin(api.origin)
+    assertProductionWsUrl('derived WebSocket URL', wsOrigin)
     const base = wsPath ? joinUrl(wsOrigin, wsPath) : wsOrigin
     return `${base}${wsQuery}`
   }

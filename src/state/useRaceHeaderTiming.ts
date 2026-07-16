@@ -9,19 +9,19 @@ export type RaceHeaderPhaseKey =
 
 export interface RaceHeaderTiming {
   key: RaceHeaderPhaseKey
-  timerLabel: 'STARTS IN' | 'RACING LIVE' | 'BETS OPEN IN' | 'RESETTING'
+  timerLabel: 'STARTS IN' | 'RACING LIVE' | 'NEXT RACE IN' | 'RESETTING'
   timerValue: string | null
   stateLabel:
-    | 'Bets open'
-    | 'Bets closed'
+    | 'Getting ready'
+    | 'Race staging'
     | 'Running'
-    | 'Settling bets'
+    | 'Results soon'
     | 'Resetting'
   navStatusText:
-    | 'BETS OPEN'
-    | 'BETS CLOSED'
+    | 'GETTING READY'
+    | 'RACE STAGING'
     | 'RUNNING'
-    | 'SETTLING BETS'
+    | 'RESULTS SOON'
     | 'RESETTING'
   accent:
     | 'linear-gradient(135deg, #4f8ef7, #6c63ff)'
@@ -45,8 +45,8 @@ export function getRaceHeaderTiming(now: Date = new Date()): RaceHeaderTiming {
       key: 'betsOpen',
       timerLabel: 'STARTS IN',
       timerValue: formatHeaderCountdown(30 - second),
-      stateLabel: 'Bets open',
-      navStatusText: 'BETS OPEN',
+      stateLabel: 'Getting ready',
+      navStatusText: 'GETTING READY',
       accent: 'linear-gradient(135deg, #4f8ef7, #6c63ff)',
       pulseColor: '#22c55e',
       isLive: false,
@@ -58,8 +58,8 @@ export function getRaceHeaderTiming(now: Date = new Date()): RaceHeaderTiming {
       key: 'betsClosed',
       timerLabel: 'STARTS IN',
       timerValue: formatHeaderCountdown(30 - second),
-      stateLabel: 'Bets closed',
-      navStatusText: 'BETS CLOSED',
+      stateLabel: 'Race staging',
+      navStatusText: 'RACE STAGING',
       accent: 'linear-gradient(135deg, #ff4757, #ff6b81)',
       pulseColor: '#ef4444',
       isLive: false,
@@ -82,10 +82,10 @@ export function getRaceHeaderTiming(now: Date = new Date()): RaceHeaderTiming {
   if (second < 55) {
     return {
       key: 'settlingBets',
-      timerLabel: 'BETS OPEN IN',
+      timerLabel: 'NEXT RACE IN',
       timerValue: formatHeaderCountdown(55 - second),
-      stateLabel: 'Settling bets',
-      navStatusText: 'SETTLING BETS',
+      stateLabel: 'Results soon',
+      navStatusText: 'RESULTS SOON',
       accent: 'linear-gradient(135deg, #f97316, #fb923c)',
       pulseColor: '#f97316',
       isLive: false,

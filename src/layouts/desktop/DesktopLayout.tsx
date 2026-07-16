@@ -1,15 +1,31 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { useAppAuth } from '../../auth/AppAuthProvider'
-import { BettingArea } from '../../components/BettingArea/BettingArea'
+import { LiveRaceLeaderboard } from '../../components/LiveRaceLeaderboard/LiveRaceLeaderboard'
 import { BottomWidgets } from '../../components/NewLayout/BottomWidgets'
-import { CompactRaceInfo } from '../../components/NewLayout/CompactRaceInfo'
 import { OnTrackEventsCard } from '../../components/NewLayout/OnTrackEventsCard'
 import { RaceTrack } from '../../components/RaceTrack/RaceTrack'
 import { ResultsPanel } from '../../components/ResultsPanel/ResultsPanel'
+import { PUBLIC_VIEWER_MODE } from '../../config/features'
 import type {
   ResultsPanelProps,
   Standing,
 } from '../../components/ResultsPanel/ResultsPanel'
+
+const PrivateBettingArea = !PUBLIC_VIEWER_MODE
+  ? React.lazy(() =>
+      import('../../components/BettingArea/BettingArea').then((module) => ({
+        default: module.BettingArea,
+      })),
+    )
+  : null
+
+const PrivateCompactRaceInfo = !PUBLIC_VIEWER_MODE
+  ? React.lazy(() =>
+      import('../../components/NewLayout/CompactRaceInfo').then((module) => ({
+        default: module.CompactRaceInfo,
+      })),
+    )
+  : null
 
 interface DesktopLayoutProps {
   showFinishAnimation: boolean
@@ -42,12 +58,22 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <RaceTrack showFinishAnimation={showFinishAnimation} />
       </div>
 
-      <div className="nines-race-mobile-status">
-        <CompactRaceInfo />
-      </div>
+      {PrivateCompactRaceInfo && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE ? (
+        <div className="nines-race-mobile-status">
+          <Suspense fallback={null}>
+            <PrivateCompactRaceInfo />
+          </Suspense>
+        </div>
+      ) : null}
 
       <div className="nines-race-betting">
-        <BettingArea />
+        {PrivateBettingArea && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE ? (
+          <Suspense fallback={null}>
+            <PrivateBettingArea />
+          </Suspense>
+        ) : (
+          <LiveRaceLeaderboard />
+        )}
       </div>
 
       {showResultsPanel && (

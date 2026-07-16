@@ -6,8 +6,6 @@ type ResultsPanelExampleProps = {
   winner: {
     horseNumber: number
     horseName: string
-    odds: string
-    payout: string
   } | null
   standings: Standing[]
   nextRaceStartsInSeconds: number

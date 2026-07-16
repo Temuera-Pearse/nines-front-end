@@ -157,7 +157,7 @@
 
 .results-panel__standing-row {
   display: grid;
-  grid-template-columns: 52px 72px minmax(0, 1fr) 92px 92px;
+  grid-template-columns: 52px 72px minmax(0, 1fr) 92px;
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
@@ -183,8 +183,7 @@
 }
 
 .results-panel__horse-number,
-.results-panel__odds,
-.results-panel__payout {
+.results-panel__status {
   font-weight: 800;
 }
 
@@ -196,8 +195,7 @@
   text-overflow: ellipsis;
 }
 
-.results-panel__odds,
-.results-panel__payout {
+.results-panel__status {
   text-align: right;
   color: rgba(255, 255, 255, 0.88);
 }
@@ -259,7 +257,7 @@
   }
 
   .results-panel__standing-row {
-    grid-template-columns: 44px 62px minmax(0, 1fr) 74px 74px;
+    grid-template-columns: 44px 62px minmax(0, 1fr) 74px;
     font-size: 14px;
   }
 }
@@ -294,8 +292,7 @@
     padding: 10px;
   }
 
-  .results-panel__odds,
-  .results-panel__payout {
+  .results-panel__status {
     grid-column: span 1;
     text-align: left;
   }

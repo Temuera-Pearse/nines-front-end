@@ -7,6 +7,7 @@ import {
   type RaceWinnerDeclaredPayload,
   useRaceStore,
 } from '../state/raceStore'
+import { IS_DEVELOPMENT } from '../config/features'
 import { OFFLINE_MODE, WS_URL } from '../config/runtime'
 import { getDefaultHorseIds } from '../constants/raceParticipants'
 
@@ -151,23 +152,46 @@ class WebSocketService {
   private lastSeq: number | null = null
   private horseOrder: string[] | null = null
   private lastPositions: number[] | null = null
+  private reconnectAttempt = 0
+  private shouldReconnect = false
+  private lastNoiseAt = 0
 
   constructor() {
     if (OFFLINE_MODE) {
-      console.log('[WebSocket] OFFLINE mode enabled; not connecting')
+      this.log('[WebSocket] OFFLINE mode enabled; not connecting')
       return
     }
-    this.connect()
   }
 
-  private connect() {
+  public connect() {
+    if (OFFLINE_MODE) return
+    this.shouldReconnect = true
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.OPEN ||
+        this.ws.readyState === WebSocket.CONNECTING)
+    ) {
+      return
+    }
+    this.openConnection()
+  }
+
+  private openConnection() {
+    if (!this.shouldReconnect) return
+
     try {
+      if (typeof WebSocket === 'undefined') {
+        this.warn('[WebSocket] WebSocket API is unavailable in this browser')
+        return
+      }
+
       this.ws = new WebSocket(this.url)
       // If server sends binary frames, prefer ArrayBuffer.
       this.ws.binaryType = 'arraybuffer'
 
       this.ws.onopen = () => {
-        console.log('[WebSocket] Connected at', new Date().toISOString())
+        this.log('[WebSocket] Connected at', new Date().toISOString())
+        this.reconnectAttempt = 0
         if (this.reconnectTimeout) {
           clearTimeout(this.reconnectTimeout)
           this.reconnectTimeout = null
@@ -181,13 +205,13 @@ class WebSocketService {
           if (typeof event.data === 'string') {
             const parsed: unknown = JSON.parse(event.data)
             if (!parsed || typeof parsed !== 'object') {
-              console.warn('[WebSocket] Unexpected message shape; ignoring')
+              this.warn('[WebSocket] Unexpected message shape; ignoring')
               return
             }
 
             const data = parsed as AnyRecord
             if (typeof data.type !== 'string') {
-              console.warn('[WebSocket] Missing message type; ignoring')
+              this.warn('[WebSocket] Missing message type; ignoring')
               return
             }
 
@@ -220,7 +244,7 @@ class WebSocketService {
             }
             if (data.type === 'error') {
               const err = data as unknown as ErrorMsg
-              console.warn('[WebSocket] Server error:', err.message ?? err)
+              this.warn('[WebSocket] Server error:', err.message ?? err)
               return
             }
 
@@ -236,7 +260,7 @@ class WebSocketService {
 
             // Legacy events (keep for compatibility)
             const legacy = data as unknown as WebSocketEvent
-            console.log(
+            this.log(
               `[WebSocket] ${legacy.type} received at ${legacy.timestampUtc}`,
               legacy,
             )
@@ -252,28 +276,66 @@ class WebSocketService {
             return
           }
 
-          console.warn('[WebSocket] Unsupported frame type; ignoring')
+          this.warn('[WebSocket] Unsupported frame type; ignoring')
         } catch (error) {
-          console.error('[WebSocket] Error parsing message:', error)
+          this.warn('[WebSocket] Error parsing message:', error)
         }
       }
 
       this.ws.onerror = (error) => {
-        console.error('[WebSocket] Error:', error)
+        this.warn('[WebSocket] Error:', error)
       }
 
       this.ws.onclose = () => {
-        console.log('[WebSocket] Disconnected at', new Date().toISOString())
+        this.log('[WebSocket] Disconnected at', new Date().toISOString())
+        this.ws = null
         this.lastSeq = null
         this.lastPositions = null
-        // Attempt to reconnect after 3 seconds
-        this.reconnectTimeout = window.setTimeout(() => {
-          console.log('[WebSocket] Attempting to reconnect...')
-          this.connect()
-        }, 3000)
+
+        if (!this.shouldReconnect) return
+
+        this.scheduleReconnect('close')
       }
     } catch (error) {
-      console.error('[WebSocket] Connection error:', error)
+      this.warn('[WebSocket] Connection error:', error)
+      if (!this.shouldReconnect) return
+
+      this.scheduleReconnect('connection error')
+    }
+  }
+
+  private scheduleReconnect(reason: string) {
+    if (!this.shouldReconnect || this.reconnectTimeout !== null) return
+
+    const baseDelayMs = Math.min(30_000, 1000 * 2 ** this.reconnectAttempt)
+    const jitterMs = Math.floor(Math.random() * Math.min(1000, baseDelayMs * 0.25))
+    const delayMs = baseDelayMs + jitterMs
+    this.reconnectAttempt += 1
+
+    this.reconnectTimeout = window.setTimeout(() => {
+      this.reconnectTimeout = null
+      if (!this.shouldReconnect) return
+      this.log(`[WebSocket] Attempting to reconnect after ${reason}...`)
+      this.openConnection()
+    }, delayMs)
+  }
+
+  private log(...args: unknown[]) {
+    if (IS_DEVELOPMENT) {
+      console.log(...args)
+    }
+  }
+
+  private warn(...args: unknown[]) {
+    if (IS_DEVELOPMENT) {
+      console.warn(...args)
+      return
+    }
+
+    const now = Date.now()
+    if (now - this.lastNoiseAt > 30_000) {
+      this.lastNoiseAt = now
+      console.warn('[WebSocket] Connection issue; retrying')
     }
   }
 
@@ -664,7 +726,7 @@ class WebSocketService {
         break
 
       default:
-        console.warn('[WebSocket] Unknown event type:', data.type)
+        this.warn('[WebSocket] Unknown event type:', data.type)
     }
   }
 
@@ -698,7 +760,9 @@ class WebSocketService {
   }
 
   public disconnect() {
+    this.shouldReconnect = false
     if (this.ws) {
+      this.ws.onclose = null
       this.ws.close()
       this.ws = null
     }
@@ -707,6 +771,7 @@ class WebSocketService {
       this.reconnectTimeout = null
     }
     this.lastSeq = null
+    this.lastPositions = null
   }
 }
 

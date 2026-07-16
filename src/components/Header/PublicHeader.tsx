@@ -4,9 +4,10 @@ import { HeaderRaceTimer } from './HeaderRaceTimer'
 import { NinesLogo } from './NinesLogo'
 
 export const PublicHeader: React.FC = React.memo(function PublicHeader() {
-  const { authFlowError, isEnabled, login, playerVerificationError, signup } =
-    useAppAuth()
-  const visibleAuthError = authFlowError ?? playerVerificationError
+  const { authFlowError, isEnabled, playerVerificationError } = useAppAuth()
+  const visibleAuthError = isEnabled
+    ? authFlowError ?? playerVerificationError
+    : null
 
   return (
     <header className="nines-header-shell">
@@ -17,33 +18,10 @@ export const PublicHeader: React.FC = React.memo(function PublicHeader() {
           <div className="nines-header-public-race-row">
             <HeaderRaceTimer />
           </div>
-
-          <div className="nines-header-actions">
-            <button
-              type="button"
-              className="nines-header-button nines-header-button--secondary"
-              onClick={() => {
-                void login()
-              }}
-              disabled={!isEnabled}
-            >
-              Login
-            </button>
-            <button
-              type="button"
-              className="nines-header-button nines-header-button--primary"
-              onClick={() => {
-                void signup()
-              }}
-              disabled={!isEnabled}
-            >
-              Register
-            </button>
-          </div>
         </div>
         {visibleAuthError ? (
           <div className="nines-auth-error" role="alert">
-            Login unavailable: {visibleAuthError}
+            Nines service unavailable: {visibleAuthError}
           </div>
         ) : null}
       </div>

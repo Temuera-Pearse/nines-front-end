@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { useAppAuth } from './auth/AppAuthProvider'
 import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
@@ -9,9 +9,9 @@ import {
   getRaceResults,
   getRaceTicksFinal,
 } from './api/race'
+import { PUBLIC_VIEWER_MODE } from './config/features'
 import { OFFLINE_MODE } from './config/runtime'
 import { HeaderGate } from './components/Header/HeaderGate'
-import { AddFundsDrawer } from './components/Funding/AddFundsDrawer'
 import { useRaceLifecycle } from './state/useRaceLifecycle'
 import {
   selectResultsStandings,
@@ -21,6 +21,14 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 import { DesktopLayout } from './layouts/desktop/DesktopLayout'
 import { MobileLayout } from './layouts/mobile/MobileLayout'
 import './App.css'
+
+const PrivateAddFundsDrawer = !PUBLIC_VIEWER_MODE
+  ? React.lazy(() =>
+      import('./components/Funding/AddFundsDrawer').then((module) => ({
+        default: module.AddFundsDrawer,
+      })),
+    )
+  : null
 
 /**
  * Derive the visible page from wall-clock UTC seconds.
@@ -134,6 +142,8 @@ function App() {
         wsService.disconnect()
       }
     }
+
+    wsService.connect()
 
     ;(async () => {
       try {
@@ -282,7 +292,14 @@ function App() {
       <div key={pagePhase} className="page-enter flex-1 min-h-0">
         {renderPageContent()}
       </div>
-      {hasConfirmedPlayer && !isRestoringAuth ? <AddFundsDrawer /> : null}
+      {PrivateAddFundsDrawer &&
+      hasConfirmedPlayer &&
+      !isRestoringAuth &&
+      !PUBLIC_VIEWER_MODE ? (
+        <Suspense fallback={null}>
+          <PrivateAddFundsDrawer />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

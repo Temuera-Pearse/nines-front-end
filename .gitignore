@@ -12,3 +12,6 @@ vitest-results.json
 !.env.example
 *.log
 .DS_Store
+.certs/
+.env.*.local
+.env.local

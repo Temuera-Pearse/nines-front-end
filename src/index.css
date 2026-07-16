@@ -25,6 +25,63 @@ body,
   min-height: 100vh;
 }
 
+.nines-error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.nines-error-boundary__panel {
+  width: min(100%, 560px);
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.42);
+}
+
+.nines-error-boundary__eyebrow {
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nines-error-boundary__title {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.nines-error-boundary__message {
+  margin-top: 14px;
+  max-height: 180px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #fecaca;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.nines-error-boundary__button {
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 /* ─── Page phase fade-in ─── */
 @keyframes page-fade-in {
   from {

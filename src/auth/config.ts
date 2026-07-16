@@ -1,3 +1,5 @@
+import { FRONTEND_AUTH_ENABLED } from '../config/features'
+
 export interface Auth0RuntimeConfig {
   domain: string
   clientId: string
@@ -11,6 +13,11 @@ const domain = (import.meta.env.VITE_AUTH0_DOMAIN ?? '').trim()
 const clientId = (import.meta.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
 const audience = (import.meta.env.VITE_AUTH0_AUDIENCE ?? '').trim()
 const ninesApiUrl = (import.meta.env.VITE_NINES_API_URL ?? '').trim()
+const hasCompleteAuth0Config =
+  domain.length > 0 &&
+  clientId.length > 0 &&
+  audience.length > 0 &&
+  ninesApiUrl.length > 0
 
 export const AUTH0_CONFIG: Auth0RuntimeConfig = {
   domain,
@@ -18,9 +25,5 @@ export const AUTH0_CONFIG: Auth0RuntimeConfig = {
   audience,
   ninesApiUrl,
   cacheLocation: 'localstorage',
-  isEnabled:
-    domain.length > 0 &&
-    clientId.length > 0 &&
-    audience.length > 0 &&
-    ninesApiUrl.length > 0,
+  isEnabled: FRONTEND_AUTH_ENABLED && hasCompleteAuth0Config,
 }

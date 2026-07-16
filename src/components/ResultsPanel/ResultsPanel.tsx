@@ -5,8 +5,6 @@ export type Standing = {
   position: number
   horseNumber: number
   horseName: string
-  odds: string
-  payout?: string
 }
 
 export type ResultsPanelProps = {
@@ -14,8 +12,6 @@ export type ResultsPanelProps = {
   winner: {
     horseNumber: number
     horseName: string
-    odds: string
-    payout: string
   } | null
   standings: Standing[]
   nextRaceStartsInSeconds: number
@@ -73,7 +69,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
       <header className="results-panel__header">
         <div>
           <p className="results-panel__eyebrow">Official Results</p>
-          <h2 className="results-panel__title">Race settled by the backend</h2>
+          <h2 className="results-panel__title">Race result confirmed</h2>
         </div>
         <div
           className="results-panel__countdown"
@@ -98,7 +94,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 {winner.horseName}
               </div>
               <div className="results-panel__winner-meta">
-                Odds {winner.odds} • Payout {winner.payout}
+                Official winner
               </div>
             </div>
           </div>
@@ -132,10 +128,8 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     <span className="results-panel__horse-name">
                       {standing.horseName}
                     </span>
-                    <span className="results-panel__odds">{standing.odds}</span>
-                    <span className="results-panel__payout">
-                      {standing.payout ??
-                        (isWinner && winner ? winner.payout : '—')}
+                    <span className="results-panel__status">
+                      {isWinner ? 'Winner' : 'Finished'}
                     </span>
                   </li>
                 )
@@ -150,9 +144,9 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
         <aside
           className="results-panel__summary-card"
-          aria-label="Payout summary"
+          aria-label="Race summary"
         >
-          <h3 className="results-panel__section-title">Payout Summary</h3>
+          <h3 className="results-panel__section-title">Race Summary</h3>
           {winner ? (
             <dl className="results-panel__summary-list">
               <div>
@@ -162,21 +156,13 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 </dd>
               </div>
               <div>
-                <dt>Official odds</dt>
-                <dd>{winner.odds}</dd>
-              </div>
-              <div>
-                <dt>Payout</dt>
-                <dd>{winner.payout}</dd>
-              </div>
-              <div>
                 <dt>Panel closes in</dt>
                 <dd>{remainingSeconds}s</dd>
               </div>
             </dl>
           ) : (
             <div className="results-panel__empty-state">
-              Payout details will appear when a winner is supplied.
+              Race summary will appear when a winner is supplied.
             </div>
           )}
         </aside>
