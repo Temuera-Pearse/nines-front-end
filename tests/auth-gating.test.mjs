@@ -27,6 +27,7 @@ describe('confirmed player access rule', () => {
   const disabledRoutes = read('src/config/disabledRoutes.ts')
   const envExample = read('.env.example')
   const publicHeader = read('src/components/Header/PublicHeader.tsx')
+  const appHeader = read('src/components/Header/AppHeader.tsx')
   const viteConfig = read('vite.config.ts')
   const mediaQueryHook = read('src/hooks/useMediaQuery.ts')
   const gitignore = read('.gitignore')
@@ -182,6 +183,12 @@ describe('confirmed player access rule', () => {
     assert.doesNotMatch(publicHeader, />\s*Register\s*</)
     assert.doesNotMatch(publicHeader, /void login\(\)/)
     assert.doesNotMatch(publicHeader, /void signup\(\)/)
+  })
+
+  it('keeps the race timer out of the top header bars', () => {
+    assert.doesNotMatch(publicHeader, /HeaderRaceTimer/)
+    assert.doesNotMatch(publicHeader, /nines-header-public-race-row/)
+    assert.doesNotMatch(appHeader, /HeaderRaceTimer/)
   })
 
   it('redirects disabled auth and private routes before auth can start', () => {

@@ -4,7 +4,7 @@ import {
   getRaceEventLabel,
   positionToWorldY,
 } from '../../utils/raceHelpers'
-import { START_Y } from '../../constants/raceTrack'
+import { RACER_START_Y } from '../../constants/raceTrack'
 import './Horse.css'
 
 interface HorseProps {
@@ -174,7 +174,7 @@ export const Horse: React.FC<HorseProps> = ({
         style={{
           backgroundColor: identity.hex,
           boxShadow: `0 2px 8px ${identity.hex}66`,
-          top: `${START_Y}px`,
+          top: `${RACER_START_Y}px`,
         }}
       >
         {/* Number badge */}

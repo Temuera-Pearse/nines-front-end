@@ -28,19 +28,6 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  transition:
-    transform 260ms ease,
-    opacity 260ms ease;
-}
-
-.nines-mobile-layout--selection-focus .nines-mobile-layout__track {
-  transform: translateY(-4px) scale(0.98);
-  opacity: 0.84;
-}
-
-.nines-mobile-layout--race-focus .nines-mobile-layout__track {
-  transform: translateY(0) scale(1);
-  opacity: 1;
 }
 
 .nines-mobile-layout__track .race-viewport {

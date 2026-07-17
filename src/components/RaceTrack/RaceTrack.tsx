@@ -9,6 +9,7 @@ import {
 } from '../../utils/raceHelpers'
 import { useWinnerPresentation } from '../../state/useWinnerPresentation'
 import { WinnerBanner } from '../WinnerBanner/WinnerBanner'
+import { HeaderRaceTimer } from '../Header/HeaderRaceTimer'
 import { selectCurrentEventHeadline } from '../../state/raceSelectors'
 import {
   AUTO_RACE_CAMERA_ENABLED,
@@ -20,8 +21,6 @@ import {
 import './RaceTrack.css'
 
 const CAMERA_LERP = 0.12
-const MANUAL_CAMERA_PAUSE_MS = 3_000
-const AUTO_SCROLL_EVENT_SUPPRESSION_MS = 120
 
 interface RaceTrackProps {
   showFinishAnimation: boolean
@@ -62,9 +61,6 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     finishLineMeters,
   })
   const currentScrollRef = useRef(0)
-  const manualPauseUntilRef = useRef(0)
-  const suppressScrollUntilRef = useRef(0)
-  const lastAutoScrollTopRef = useRef(0)
 
   cameraStateRef.current = {
     horses,
@@ -105,7 +101,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
         finishLineMeters: cameraFinishLineMeters,
       } = cameraStateRef.current
       const maxScroll = Math.max(0, TRACK_HEIGHT - viewportHeight)
-      const finishTarget = FINISH_Y - viewportHeight * 0.18
+      const finishTarget = FINISH_Y - viewportHeight * 0.2
 
       if (
         cameraStatus === RaceStatus.FINISHED ||
@@ -115,7 +111,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
       }
 
       if (cameraStatus !== RaceStatus.RUNNING) {
-        return clamp(START_Y - viewportHeight * 0.82, 0, maxScroll)
+        return clamp(START_Y - viewportHeight * 0.4, 0, maxScroll)
       }
 
       const rankedHorses = cameraHorses.filter((horse) =>
@@ -160,7 +156,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
           if (viewport.scrollTop !== 0) {
             viewport.scrollTop = 0
           }
-        } else if (performance.now() >= manualPauseUntilRef.current) {
+        } else {
           const targetScroll = getCameraTarget(viewportHeight)
           const currentScroll = clamp(
             currentScrollRef.current || viewport.scrollTop,
@@ -170,12 +166,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
           const nextScroll = lerp(currentScroll, targetScroll, CAMERA_LERP)
 
           currentScrollRef.current = nextScroll
-          lastAutoScrollTopRef.current = nextScroll
-          suppressScrollUntilRef.current =
-            performance.now() + AUTO_SCROLL_EVENT_SUPPRESSION_MS
           viewport.scrollTop = nextScroll
-        } else {
-          currentScrollRef.current = viewport.scrollTop
         }
       }
 
@@ -190,22 +181,6 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
       }
     }
   }, [])
-
-  const handleViewportScroll = () => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    currentScrollRef.current = viewport.scrollTop
-
-    const now = performance.now()
-    const isAutoScrollEvent =
-      now < suppressScrollUntilRef.current ||
-      Math.abs(viewport.scrollTop - lastAutoScrollTopRef.current) < 2
-
-    if (!isAutoScrollEvent) {
-      manualPauseUntilRef.current = now + MANUAL_CAMERA_PAUSE_MS
-    }
-  }
 
   // Determine the current leader
   const leader = horses.length
@@ -223,129 +198,111 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     bannerVisibleUntilUtc,
     resultsVisible: status === 'results',
   })
-  const isWinnerPresentationActive =
-    showWinnerBanner ||
-    status === 'finished' ||
-    status === 'results' ||
-    showFinishAnimation
   const showLiveLeaderBanner =
     status === 'running' &&
     !winnerBannerHorseId &&
     Boolean(leaderIdentity && leader && leader.position > 10)
 
   return (
-    <div
-      className="race-viewport"
-      ref={viewportRef}
-      onScroll={handleViewportScroll}
-    >
-      <div
-        className={`race-track race-world${showFinishAnimation ? ' race-track--finish-animate' : ''}`}
-      >
-        <div className="race-environment race-environment--trees" />
-        <div className="race-environment race-environment--fence" />
-        <div className="race-environment race-environment--water" />
-        <div className="race-track-vignette" />
+    <div className="race-track-frame">
+      <div className="race-viewport-info" aria-live="polite">
         <div className="race-chip race-chip-left">🏁 {raceId ?? 'RACE'}</div>
-        <div className="race-chip race-chip-right">
-          {status === 'running'
-            ? 'LIVE 🔴'
-            : status === 'betsOpen'
-              ? 'GETTING SET'
-              : status === 'finished' || status === 'results'
-                ? 'RESULTS'
-                : 'NEXT RACE SOON'}
-        </div>
+        <HeaderRaceTimer />
+      </div>
 
-        <div className="race-track-overlays">
-          {showStartSignal && (
-            <div className="start-banner">And they're off!</div>
-          )}
-
-          {showLiveLeaderBanner && leaderIdentity && leader && (
-            <div
-              className="leader-banner"
-              style={{
-                borderColor: leaderIdentity.hex,
-                color: leaderIdentity.hex,
-              }}
-            >
-              <span
-                className="leader-dot"
-                style={{ background: leaderIdentity.hex }}
-              />
-              🏇 {leaderIdentity.name} leads!
-            </div>
-          )}
-
-          {status === 'running' && currentEventHeadline && (
-            <div className="event-banner">{currentEventHeadline}</div>
-          )}
-        </div>
-
-        <div className="race-lanes">
-          {horses.map((horse, index) => (
-            <div
-              key={horse.id}
-              className={`race-lane race-lane-${index}${horse.id === displayWinnerId ? ' race-lane--winner' : ''}`}
-              style={{ '--lane-index': index } as React.CSSProperties}
-            >
-              <div
-                className="lane-label"
-                style={{ color: getHorseIdentity(horse.id).hex }}
-              >
-                {getHorseName(horse.id)}
-              </div>
-              <div className="lane-track">
-                <div
-                  className="lane-marker lane-marker--start"
-                  style={{ top: `${START_Y}px` }}
-                >
-                  {index === 0 ? <span>START</span> : null}
-                </div>
-                <div
-                  className="lane-marker lane-marker--finish"
-                  style={{ top: `${FINISH_Y}px` }}
-                >
-                  {index === 0 ? <span>FINISH</span> : null}
-                </div>
-                <Horse
-                  id={horse.id}
-                  position={horse.position}
-                  laneNumber={index + 1}
-                  finishLineMeters={finishLineMeters}
-                  interpolationEnabled={interpolationEnabled}
-                  activeEventIds={horseEffects[horse.id]?.activeEventIds ?? []}
-                  isStunned={horseEffects[horse.id]?.isStunned === true}
-                  isRemoved={horseEffects[horse.id]?.isRemoved === true}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {displayWinnerId && (
-          <>
-            <WinnerBanner
-              winnerName={winnerIdentity.name}
-              accentColor={winnerIdentity.hex}
-              visible={showWinnerBanner}
-            />
-            <div className="confetti-wrap">
-              {Array.from({ length: 28 }).map((_, i) => (
-                <span
-                  key={i}
-                  className="confetti-piece"
-                  style={{
-                    left: `${(i / 28) * 100}%`,
-                    animationDelay: `${(i % 7) * 0.08}s`,
-                    animationDuration: `${3 + (i % 4) * 0.3}s`,
-                  }}
-                />
-              ))}
-            </div>
-          </>
+      <div className="race-track-overlays">
+        {showStartSignal && (
+          <div className="start-banner">And they're off!</div>
         )}
+
+        {showLiveLeaderBanner && leaderIdentity && leader && (
+          <div
+            className="leader-banner"
+            style={{
+              borderColor: leaderIdentity.hex,
+              color: leaderIdentity.hex,
+            }}
+          >
+            <span
+              className="leader-dot"
+              style={{ background: leaderIdentity.hex }}
+            />
+            🏇 {leaderIdentity.name} leads!
+          </div>
+        )}
+
+        {status === 'running' && currentEventHeadline && (
+          <div className="event-banner">{currentEventHeadline}</div>
+        )}
+      </div>
+
+      <div className="race-viewport" ref={viewportRef}>
+        <div className="race-track race-world">
+          <div className="race-environment race-environment--trees" />
+          <div className="race-environment race-environment--fence" />
+          <div className="race-environment race-environment--water" />
+          <div className="race-track-vignette" />
+
+          <div className="race-lanes">
+            {horses.map((horse, index) => (
+              <div
+                key={horse.id}
+                className={`race-lane race-lane-${index}${horse.id === displayWinnerId ? ' race-lane--winner' : ''}`}
+                style={{ '--lane-index': index } as React.CSSProperties}
+              >
+                <div
+                  className="lane-label"
+                  style={{ color: getHorseIdentity(horse.id).hex }}
+                >
+                  {getHorseName(horse.id)}
+                </div>
+                <div className="lane-track">
+                  <div
+                    className="lane-marker lane-marker--start"
+                    style={{ top: `${START_Y}px` }}
+                  />
+                  <div
+                    className="lane-marker lane-marker--finish"
+                    style={{ top: `${FINISH_Y}px` }}
+                  />
+                  <Horse
+                    id={horse.id}
+                    position={horse.position}
+                    laneNumber={index + 1}
+                    finishLineMeters={finishLineMeters}
+                    interpolationEnabled={interpolationEnabled}
+                    activeEventIds={horseEffects[horse.id]?.activeEventIds ?? []}
+                    isStunned={horseEffects[horse.id]?.isStunned === true}
+                    isRemoved={horseEffects[horse.id]?.isRemoved === true}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {displayWinnerId && (
+            <>
+              <WinnerBanner
+                winnerName={winnerIdentity.name}
+                accentColor={winnerIdentity.hex}
+                visible={showWinnerBanner}
+              />
+              <div className="confetti-wrap">
+                {Array.from({ length: 28 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="confetti-piece"
+                    style={{
+                      left: `${(i / 28) * 100}%`,
+                      animationDelay: `${(i % 7) * 0.08}s`,
+                      animationDuration: `${3 + (i % 4) * 0.3}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

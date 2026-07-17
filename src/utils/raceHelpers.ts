@@ -1,6 +1,7 @@
 import {
   FINISH_Y,
-  RACE_DISTANCE_Y,
+  RACER_DISTANCE_Y,
+  RACER_START_Y,
   START_Y,
   TRACK_HEIGHT,
 } from '../constants/raceTrack'
@@ -200,7 +201,7 @@ export function positionToRaceProgress(
 }
 
 export function raceProgressToWorldY(progress: number): number {
-  return START_Y - clamp(progress, 0, 1) * RACE_DISTANCE_Y
+  return RACER_START_Y - clamp(progress, 0, 1) * RACER_DISTANCE_Y
 }
 
 export function positionToWorldY(

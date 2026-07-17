@@ -1,14 +1,27 @@
+.race-track-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(2, 6, 23, 0.22);
+}
+
 .race-viewport {
   width: 100%;
   height: 100%;
   min-height: 520px;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   scroll-behavior: auto;
-  border-radius: 18px;
   display: flex;
   justify-content: center;
-  background: rgba(2, 6, 23, 0.22);
+  scrollbar-width: none;
+}
+
+.race-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .race-track {
@@ -16,7 +29,7 @@
   box-sizing: border-box;
   flex: 0 0 auto;
   width: min(100%, 420px);
-  height: 1180px;
+  height: 1740px;
   background:
     linear-gradient(
       90deg,
@@ -39,18 +52,10 @@
 .race-track::before {
   content: '';
   position: absolute;
-  inset: 36px 32px;
+  inset: 0 32px;
   z-index: 0;
-  border-radius: 26px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.12) 0,
-      rgba(255, 255, 255, 0.12) 1px,
-      transparent 1px,
-      transparent calc((100% - 64px) / 9)
-    ),
-    linear-gradient(90deg, #7c5434, #a86f3e 48%, #7c5434);
+  border-radius: 0;
+  background: linear-gradient(90deg, #7c5434, #a86f3e 48%, #7c5434);
   box-shadow:
     inset 0 0 0 2px rgba(120, 53, 15, 0.35),
     inset 0 0 42px rgba(69, 26, 3, 0.22);
@@ -76,9 +81,9 @@
 }
 
 .race-environment--fence {
-  inset: 32px 24px;
-  border: 2px dashed rgba(254, 243, 199, 0.28);
-  border-radius: 28px;
+  inset: 0 24px;
+  border-left: 2px dashed rgba(254, 243, 199, 0.28);
+  border-right: 2px dashed rgba(254, 243, 199, 0.28);
 }
 
 .race-environment--water {
@@ -88,20 +93,6 @@
   height: 210px;
   border-radius: 999px 0 0 999px;
   background: rgba(56, 189, 248, 0.24);
-}
-
-.race-track--finish-animate::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.34),
-    transparent 58%
-  );
-  animation: finish-flash 700ms ease-out;
 }
 
 .race-track-vignette {
@@ -123,12 +114,74 @@
     linear-gradient(to bottom, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.08));
 }
 
+.race-viewport-info {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 30;
+  width: min(100%, 420px);
+  box-sizing: border-box;
+  padding: 0 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.race-viewport-info .nines-header-race-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.race-viewport-info .nines-header-race-block--compact {
+  flex: 0 0 auto;
+}
+
+.race-viewport-info .nines-header-race-muted {
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.42);
+  white-space: nowrap;
+}
+
+.race-viewport-info .nines-header-status-chip,
+.race-viewport-info .nines-header-countdown-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
+}
+
+.race-viewport-info .nines-header-status-chip {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  font-size: 10px;
+}
+
+.race-viewport-info .nines-header-countdown-chip {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  font-size: 12px;
+}
+
 .race-track-overlays {
   position: absolute;
-  top: 42px;
-  left: 12px;
-  right: 12px;
-  z-index: 4;
+  top: 48px;
+  left: 50%;
+  z-index: 30;
+  width: min(100%, 420px);
+  box-sizing: border-box;
+  padding: 0 12px;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -140,9 +193,7 @@
   position: absolute;
   --lane-count: 9;
   --lane-gutter: 32px;
-  --lane-width: calc(
-    (100% - (var(--lane-gutter) * 2)) / var(--lane-count)
-  );
+  --lane-width: calc((100% - (var(--lane-gutter) * 2)) / var(--lane-count));
   inset: 0;
   z-index: 1;
 }
@@ -204,9 +255,8 @@
 }
 
 .race-chip {
-  position: absolute;
-  top: 12px;
-  z-index: 4;
+  position: static;
+  z-index: 1;
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 11px;
@@ -217,15 +267,8 @@
 }
 
 .race-chip-left {
-  left: 12px;
   color: #ffd700;
   background: rgba(10, 18, 38, 0.75);
-}
-
-.race-chip-right {
-  right: 12px;
-  color: #fff;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
 .lane-marker {
@@ -245,21 +288,6 @@
   align-items: flex-start;
   justify-content: center;
   z-index: 2;
-}
-
-.lane-marker span {
-  position: absolute;
-  left: 50%;
-  bottom: 7px;
-  transform: translateX(-50%);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  color: rgba(226, 232, 240, 0.92);
-  background: rgba(15, 23, 42, 0.86);
-  border-radius: 999px;
-  padding: 2px 6px;
-  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
 }
 
 .lane-marker--start {
@@ -290,9 +318,9 @@
   width: var(--lane-width);
   border-radius: 2px;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.14);
+  background: transparent;
   z-index: 1;
-  border-left: 1px solid rgba(254, 243, 199, 0.16);
+  border-left: 0;
 }
 
 .race-lane--winner {
@@ -306,14 +334,14 @@
 .lane-label {
   position: absolute;
   left: 50%;
-  bottom: 26px;
+  bottom: 410px;
   z-index: 3;
   transform: translateX(-50%) rotate(-90deg);
-  width: 92px;
-  padding: 3px 5px;
+  width: 112px;
+  padding: 4px 6px;
   background: rgba(2, 6, 23, 0.48);
-  font-weight: 800;
-  font-size: 9px;
+  font-weight: 900;
+  font-size: 11px;
   text-align: center;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
@@ -363,18 +391,6 @@
 
 .confetti-piece {
   background: linear-gradient(135deg, #ff4757, #ffd700);
-}
-
-@keyframes finish-flash {
-  0% {
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
 }
 
 @keyframes winner-pop {

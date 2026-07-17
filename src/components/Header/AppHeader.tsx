@@ -5,7 +5,6 @@ import { formatUsdcBalance, useFundingStore } from '../../state/fundingStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { AccountDropdown } from './AccountDropdown'
-import { HeaderRaceTimer } from './HeaderRaceTimer'
 import { NinesLogo } from './NinesLogo'
 
 const MENU_HASHES: Record<string, string> = {
@@ -113,8 +112,6 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
                 {runnerCount} runners
               </span>
             </div>
-
-            <HeaderRaceTimer />
 
             <div className="nines-header-race-block nines-header-race-block--stats">
               <HeaderStat
