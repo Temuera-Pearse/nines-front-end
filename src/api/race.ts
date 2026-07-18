@@ -1,6 +1,7 @@
 import { fetchJson } from './client'
 
 export interface RaceConfigResponse {
+  protoVer?: number
   keyId?: string
   publicKey?: string
   keyframeIntervalTicks?: number
@@ -8,7 +9,7 @@ export interface RaceConfigResponse {
 }
 
 export interface RaceCurrentResponse {
-  raceId: string
+  raceRef: string | null
   startTime?: string
   endTime?: string
   finishLine?: number
@@ -17,7 +18,7 @@ export interface RaceCurrentResponse {
 }
 
 export interface RaceResultsResponse {
-  raceId: string
+  raceRef: string
   timestampUtc?: string
   winnerId?: string
   finishOrder?: string[]
@@ -56,27 +57,27 @@ export async function getRaceHistory(): Promise<unknown> {
 }
 
 export async function getRaceResults(
-  raceId: string,
+  raceRef: string,
 ): Promise<RaceResultsResponse> {
   return fetchJson<RaceResultsResponse>(
-    `/race/results/${encodeURIComponent(raceId)}`,
+    `/race/results/${encodeURIComponent(raceRef)}`,
     {
       method: 'GET',
     },
   )
 }
 
-export async function getRaceTimeline(raceId: string): Promise<unknown> {
-  return fetchJson<unknown>(`/race/timeline/${encodeURIComponent(raceId)}`, {
+export async function getRaceTimeline(raceRef: string): Promise<unknown> {
+  return fetchJson<unknown>(`/race/timeline/${encodeURIComponent(raceRef)}`, {
     method: 'GET',
   })
 }
 
 export async function getRaceTicksFinal(
-  raceId: string,
+  raceRef: string,
 ): Promise<RaceFinalTicksResponse> {
   return fetchJson<RaceFinalTicksResponse>(
-    `/race/ticks-final/${encodeURIComponent(raceId)}`,
+    `/race/ticks-final/${encodeURIComponent(raceRef)}`,
     {
       method: 'GET',
     },

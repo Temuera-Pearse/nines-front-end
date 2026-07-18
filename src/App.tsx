@@ -51,7 +51,7 @@ const AppLoadingState: React.FC<{ message: string }> = ({ message }) => (
 function App() {
   const { hasConfirmedPlayer, isEnabled, isLoading } = useAppAuth()
   const status = useRaceStore((s) => s.status)
-  const raceId = useRaceStore((s) => s.raceId)
+  const raceRef = useRaceStore((s) => s.raceRef)
   const resultsWinner = useRaceStore(selectResultsWinner)
   const resultsStandings = useRaceStore(selectResultsStandings)
   const isMobileLayout = useMediaQuery(
@@ -157,7 +157,10 @@ function App() {
         if (cancelled) return
 
         const store = useRaceStore.getState()
-        store.setRaceId(current.raceId)
+        // Stable legacy policy: records created before public references exist
+        // remain unavailable rather than receiving a synthetic identity on read.
+        if (!current.raceRef) return
+        store.setRaceRef(current.raceRef)
         applyRaceGeometry(
           current.config as Record<string, unknown> | undefined,
           current.finishLine,
@@ -170,8 +173,8 @@ function App() {
         if (end) {
           try {
             const [results, finalTicks] = await Promise.all([
-              getRaceResults(current.raceId),
-              getRaceTicksFinal(current.raceId).catch(() => null),
+              getRaceResults(current.raceRef),
+              getRaceTicksFinal(current.raceRef).catch(() => null),
             ])
             if (!cancelled) {
               const lastTick =
@@ -180,7 +183,7 @@ function App() {
                 applyFinalTickPositions(lastTick.positions)
               }
               store.handleRaceFinish({
-                raceId: current.raceId,
+                raceRef: current.raceRef,
                 timestampUtc:
                   typeof results.timestampUtc === 'string'
                     ? results.timestampUtc
@@ -204,7 +207,7 @@ function App() {
           } catch {
             if (!cancelled) {
               store.handleRaceFinish({
-                raceId: current.raceId,
+                raceRef: current.raceRef,
                 timestampUtc: end,
               })
             }
@@ -228,7 +231,7 @@ function App() {
         }
 
         // If WS is already connected, a sync request will fire on open; otherwise this is a no-op.
-        wsService.requestSync(current.raceId)
+        wsService.requestSync(current.raceRef)
       } catch {
         // Backend might not be reachable yet; fall back to demo state.
         ensureDemoState()
@@ -245,7 +248,7 @@ function App() {
 
   // Track the current page key so we can re-trigger the fade on phase change
   const pagePhase =
-    !raceId && status === RaceStatus.IDLE
+    !raceRef && status === RaceStatus.IDLE
       ? 'connecting'
       : utcPagePhase(clockSec)
 
@@ -257,7 +260,7 @@ function App() {
     }
 
     // If we have no race data yet, show the connecting screen
-    if (!raceId && status === RaceStatus.IDLE) {
+    if (!raceRef && status === RaceStatus.IDLE) {
       return <AppLoadingState message="Connecting to race server..." />
     }
 

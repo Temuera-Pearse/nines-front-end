@@ -2,7 +2,7 @@ import { fetchJson } from './client'
 import type { FinancialCurrency, MinorUnitString } from './financialContracts'
 
 export interface PlaceBetRequest {
-  raceId: string
+  raceRef: string
   selectionId: string
   stakeMinor: MinorUnitString
   currency: FinancialCurrency

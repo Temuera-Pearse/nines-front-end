@@ -1,10 +1,17 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 
 const root = new URL('..', import.meta.url).pathname
 const read = (path) => readFileSync(join(root, path), 'utf8')
+const sourceFiles = (directory) =>
+  readdirSync(join(root, directory)).flatMap((entry) => {
+    const relative = join(directory, entry)
+    return statSync(join(root, relative)).isDirectory()
+      ? sourceFiles(relative)
+      : [relative]
+  })
 
 describe('public launch guardrails', () => {
   const app = read('src/App.tsx')
@@ -114,6 +121,16 @@ describe('public launch guardrails', () => {
     assert.match(websocket, /Math\.random\(\) \* Math\.min\(1000, baseDelayMs \* 0\.25\)/)
     assert.match(websocket, /this\.reconnectTimeout = null/)
     assert.match(websocket, /this\.shouldReconnect = false/)
+  })
+
+  it('uses only the public race reference in production frontend code', () => {
+    const productionSource = sourceFiles('src')
+      .map((path) => read(path))
+      .join('\n')
+
+    assert.doesNotMatch(productionSource, /raceId|RaceId/)
+    assert.match(websocket, /type: 'sync:request',[\s\S]*?raceRef/)
+    assert.match(read('src/utils/raceRef.ts'), /race: \"\$\{raceRef\}\"/)
   })
 
   it('ships Cloudflare Pages security headers for the public viewer', () => {

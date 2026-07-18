@@ -12,7 +12,7 @@ export interface PlayerBalanceDto {
 }
 
 export interface ReserveStakeRequestDto {
-  raceId: string
+  raceRef: string
   selectionId: string
   stakeMinor: MinorUnitString
   currency: FinancialCurrency

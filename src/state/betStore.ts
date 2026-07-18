@@ -30,9 +30,9 @@ export const useBetStore = create<BetState>((set, get) => ({
 
   placeBet: async () => {
     const { selectedHorse, amount } = get()
-    const { horses, raceId } = useRaceStore.getState()
+    const { horses, raceRef } = useRaceStore.getState()
 
-    if (!raceId) throw new Error('No active race')
+    if (!raceRef) throw new Error('No active race')
     if (!selectedHorse) throw new Error('No horse selected')
     const validSelectionIds =
       horses.length > 0 ? horses.map((horse) => horse.id) : getDefaultHorseIds()
@@ -42,7 +42,7 @@ export const useBetStore = create<BetState>((set, get) => ({
     if (amount <= 0) throw new Error('Bet amount must be greater than 0')
 
     await placeBetApi({
-      raceId,
+      raceRef,
       selectionId: selectedHorse,
       stakeMinor: toUsdcMinorUnitString(amount),
       currency: 'USDC',

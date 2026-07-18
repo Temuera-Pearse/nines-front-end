@@ -5,6 +5,7 @@ import { Leaderboard } from '../components/Leaderboard/Leaderboard'
 import { Card } from '../components/UI/Card'
 import { getHorseIdentity } from '../utils/raceHelpers'
 import { useRaceLifecycle } from '../state/useRaceLifecycle'
+import { formatRaceRef } from '../utils/raceRef'
 import './RacePage.css'
 
 function useClockMs() {
@@ -24,7 +25,7 @@ function useClockMs() {
 
 export const RacePage: React.FC = () => {
   const {
-    raceId,
+    raceRef,
     horses,
     winner,
     winnerBannerHorseId,
@@ -83,9 +84,9 @@ export const RacePage: React.FC = () => {
                   Race In Progress
                 </h1>
               )}
-              {raceId && (
+              {raceRef && (
                 <div className="text-xs text-gray-400 font-mono mt-1">
-                  {raceId}
+                  {formatRaceRef(raceRef)}
                 </div>
               )}
               {/* Leader banner (only during race) */}

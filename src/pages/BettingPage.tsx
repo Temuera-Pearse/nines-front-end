@@ -4,6 +4,7 @@ import { useBetStore } from '../state/betStore'
 import { BetSlip } from '../components/BetSlip/BetSlip'
 import { Card } from '../components/UI/Card'
 import { getHorseIdentity } from '../utils/raceHelpers'
+import { formatRaceRef } from '../utils/raceRef'
 import './BettingPage.css'
 
 // Precise clock hook at 50ms resolution
@@ -23,7 +24,7 @@ function useClockMs() {
 }
 
 export const BettingPage: React.FC = () => {
-  const { horses, raceId, status } = useRaceStore()
+  const { horses, raceRef, status } = useRaceStore()
   const { selectedHorse, setSelectedHorse } = useBetStore()
 
   const clockMs = useClockMs()
@@ -44,9 +45,9 @@ export const BettingPage: React.FC = () => {
         <h1 className="text-4xl font-black mb-1 text-gray-800">
           Place Your Bets
         </h1>
-        {raceId && (
+        {raceRef && (
           <div className="betting-page__race-id text-xs font-mono text-gray-400">
-            {raceId}
+            {formatRaceRef(raceRef)}
           </div>
         )}
 

@@ -25,7 +25,7 @@ export interface RaceFinishPresentation {
 }
 
 export interface RaceWinnerDeclaredPayload {
-  raceId?: string
+  raceRef?: string
   timestampUtc?: string
   winnerId?: string
   finishOrder?: string[]
@@ -38,7 +38,7 @@ export interface RaceWinnerDeclaredPayload {
 }
 
 export interface RaceFinishPayload {
-  raceId?: string
+  raceRef?: string
   timestampUtc?: string
   results?: BackendRaceResult[]
   winnerId?: string
@@ -63,7 +63,7 @@ export interface HorseEffectState {
 }
 
 export interface LastResult {
-  raceId: string
+  raceRef: string
   winner: string
   placements: string[]
   raceEndUtc: string
@@ -152,7 +152,7 @@ function resultsToPlacements(
 }
 
 export interface RaceState {
-  raceId: string | null
+  raceRef: string | null
   status: RaceStatus
   /** Stable ordering for array-based tick payloads */
   horseOrder: string[]
@@ -179,7 +179,7 @@ export interface RaceState {
   lastResult: LastResult | null
 
   // Actions
-  setRaceId: (id: string) => void
+  setRaceRef: (id: string) => void
   setStatus: (status: RaceStatus) => void
   setHorseOrder: (order: string[]) => void
   setRaceGeometry: (trackLengthMeters?: number, finishLineMeters?: number) => void
@@ -204,7 +204,7 @@ export interface RaceState {
 }
 
 const initialState = {
-  raceId: null,
+  raceRef: null,
   status: RaceStatus.IDLE,
   horseOrder: [] as string[],
   trackLengthMeters: 1000,
@@ -232,7 +232,7 @@ const initialState = {
 export const useRaceStore = create<RaceState>((set, get) => ({
   ...initialState,
 
-  setRaceId: (id) => set({ raceId: id }),
+  setRaceRef: (id) => set({ raceRef: id }),
 
   setStatus: (status) => set({ status }),
 
@@ -272,13 +272,13 @@ export const useRaceStore = create<RaceState>((set, get) => ({
       'placements:',
       placements,
     )
-    const { raceId, raceEndUtc } = get()
+    const { raceRef, raceEndUtc } = get()
     set({
       winner,
       placements,
       // Snapshot into lastResult immediately so it survives reset()
       lastResult: {
-        raceId: raceId ?? '',
+        raceRef: raceRef ?? '',
         winner,
         placements,
         raceEndUtc,
@@ -349,7 +349,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
   handleWinnerDeclared: (payload) => {
     const state = get()
     const winnerBannerHorseId = payload.winnerId ?? state.winnerBannerHorseId
-    const raceId = payload.raceId ?? state.raceId ?? ''
+    const raceRef = payload.raceRef ?? state.raceRef ?? ''
     const bannerVisibleUntilUtc = normalizeBannerVisibleUntilUtc(
       payload.presentation?.bannerVisibleUntilUtc,
       payload.timestampUtc,
@@ -360,7 +360,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
     )
 
     set({
-      raceId,
+      raceRef,
       winnerBannerHorseId,
       finishTimesMs:
         payload.finishTimesMs && typeof payload.finishTimesMs === 'object'
@@ -393,7 +393,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
         : resultsToPlacements(backendResults, knownHorseIds)
 
     const winner = payload.winnerId ?? placements[0] ?? null
-    const raceId = payload.raceId ?? state.raceId ?? ''
+    const raceRef = payload.raceRef ?? state.raceRef ?? ''
     const raceEndUtc = payload.timestampUtc ?? state.raceEndUtc
     const bannerVisibleUntilUtc = normalizeBannerVisibleUntilUtc(
       payload.presentation?.bannerVisibleUntilUtc,
@@ -405,7 +405,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
     )
 
     set({
-      raceId,
+      raceRef,
       raceEndUtc,
       status: RaceStatus.FINISHED,
       interpolationEnabled: false,
@@ -427,7 +427,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
       placements,
       lastResult: winner
         ? {
-            raceId,
+            raceRef,
             winner,
             placements,
             raceEndUtc,
@@ -452,7 +452,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
     }
 
     set({
-      raceId: state.raceId,
+      raceRef: state.raceRef,
       status: RaceStatus.IDLE,
       horseOrder: state.horseOrder,
       horses: state.horses.map((horse) => ({ ...horse, position: 0 })),

@@ -6,6 +6,7 @@ import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { AccountDropdown } from './AccountDropdown'
 import { NinesLogo } from './NinesLogo'
+import { formatRaceRef } from '../../utils/raceRef'
 
 const MENU_HASHES: Record<string, string> = {
   'Add Funds': '#wallet',
@@ -57,7 +58,7 @@ const HeaderStat: React.FC<{
 
 export const AppHeader: React.FC = React.memo(function AppHeader() {
   const { logout, user } = useAppAuth()
-  const { raceId, horses, raceStartUtc, status } = useRaceStore()
+  const { raceRef, horses, raceStartUtc, status } = useRaceStore()
   const balanceUsdc = useFundingStore((state) => state.balanceUsdc)
   const resetToAddFunds = useFundingStore((state) => state.resetToAddFunds)
   const headerTiming = useRaceHeaderTiming()
@@ -107,7 +108,9 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
 
           <div className="nines-header-race-row nines-header-race-row--inline">
             <div className="nines-header-race-block nines-header-race-block--compact">
-              <span className="nines-header-race-chip">{raceId ?? 'RACE'}</span>
+              <span className="nines-header-race-chip">
+                {formatRaceRef(raceRef)}
+              </span>
               <span className="nines-header-race-muted">
                 {runnerCount} runners
               </span>

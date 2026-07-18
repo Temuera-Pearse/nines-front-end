@@ -30,7 +30,7 @@ type AnyRecord = Record<string, unknown>
 
 interface WebSocketEvent {
   type: EventType
-  raceId: string
+  raceRef: string
   timestampUtc: string
   [key: string]: any
 }
@@ -40,7 +40,7 @@ type RaceTickType = 'race:tick' | 'race:keyframe' | 'race:delta'
 interface RaceFrame {
   type: RaceTickType
   protoVer?: number
-  raceId: string
+  raceRef: string
   seq?: number
   tickIndex: number
   tickTs?: number
@@ -69,7 +69,7 @@ interface RaceFrame {
 interface RaceInfoMsg {
   type: 'race:info'
   protoVer?: number
-  raceId: string
+  raceRef: string
   horseOrder: string[]
   config?: Record<string, unknown>
   currentTickIndex?: number
@@ -78,7 +78,7 @@ interface RaceInfoMsg {
 interface RaceStartMsg {
   type: 'race:start'
   protoVer?: number
-  raceId: string
+  raceRef: string
   timestampUtc?: string
   horseOrder?: string[]
   horses?: Array<{ id: string; name?: string }>
@@ -87,7 +87,7 @@ interface RaceStartMsg {
 interface RaceFinishMsg {
   type: 'race:finish'
   protoVer?: number
-  raceId: string
+  raceRef: string
   timestampUtc?: string
   results?: BackendRaceResult[]
   winnerId?: string
@@ -105,7 +105,7 @@ interface RaceWinnerDeclaredMsg extends RaceWinnerDeclaredPayload {
 interface RaceCatchupMsg {
   type: 'race:catchup'
   protoVer?: number
-  raceId: string
+  raceRef: string
   startIndex?: number
   currentTickIndex?: number
   ticks?: RaceFrame[]
@@ -196,8 +196,8 @@ class WebSocketService {
           clearTimeout(this.reconnectTimeout)
           this.reconnectTimeout = null
         }
-        // Don't request sync here: we might have a stale raceId from a previous session.
-        // Wait for `race:info` from the server to tell us the authoritative raceId.
+        // Don't request sync here: we might have a stale raceRef from a previous session.
+        // Wait for `race:info` from the server to tell us the authoritative raceRef.
       }
 
       this.ws.onmessage = (event) => {
@@ -363,7 +363,7 @@ class WebSocketService {
 
     // If this is a different race than what we currently show, hard-reset UI state
     // to prevent the previous race's positions/seq from bleeding into the next.
-    if (store.raceId && store.raceId !== msg.raceId) {
+    if (store.raceRef && store.raceRef !== msg.raceRef) {
       store.reset()
       // Clear lastResult for the new race to avoid showing old results
       useRaceStore.setState({ lastResult: null })
@@ -372,7 +372,7 @@ class WebSocketService {
       this.horseOrder = null
     }
 
-    store.setRaceId(msg.raceId)
+    store.setRaceRef(msg.raceRef)
     if (Array.isArray(msg.horseOrder)) {
       this.setHorseOrder(msg.horseOrder)
       this.ensureHorsesInitialized(msg.horseOrder)
@@ -391,7 +391,7 @@ class WebSocketService {
     const currentTickIndex =
       typeof msg.currentTickIndex === 'number' ? msg.currentTickIndex : -1
     if (currentTickIndex >= 0) {
-      this.requestSync(msg.raceId)
+      this.requestSync(msg.raceRef)
     }
   }
 
@@ -399,13 +399,13 @@ class WebSocketService {
     const store = useRaceStore.getState()
 
     // New race start should always reset visible positions and sequencing.
-    if (store.raceId && store.raceId !== msg.raceId) {
+    if (store.raceRef && store.raceRef !== msg.raceRef) {
       store.reset()
     }
     this.lastSeq = null
     this.lastPositions = null
 
-    store.setRaceId(msg.raceId)
+    store.setRaceRef(msg.raceRef)
     if (Array.isArray(msg.horseOrder)) {
       this.setHorseOrder(msg.horseOrder)
       this.ensureHorsesInitialized(msg.horseOrder)
@@ -444,7 +444,7 @@ class WebSocketService {
   private handleRaceCatchup(msg: RaceCatchupMsg) {
     const store = useRaceStore.getState()
     // If UI has already moved on to a different race, ignore stale catch-up.
-    if (store.raceId && msg.raceId && store.raceId !== msg.raceId) return
+    if (store.raceRef && msg.raceRef && store.raceRef !== msg.raceRef) return
     if (!Array.isArray(msg.ticks) || msg.ticks.length === 0) return
     // Apply in order; allow normal seq gating.
     const sorted = [...msg.ticks].sort(
@@ -473,9 +473,9 @@ class WebSocketService {
       return
     }
 
-    // Drop frames for a different raceId (can happen with in-flight messages
+    // Drop frames for a different raceRef (can happen with in-flight messages
     // during cycle boundaries or reconnects).
-    if (store.raceId && frame.raceId && store.raceId !== frame.raceId) {
+    if (store.raceRef && frame.raceRef && store.raceRef !== frame.raceRef) {
       return
     }
 
@@ -484,8 +484,8 @@ class WebSocketService {
       this.lastSeq = frame.seq
     }
 
-    if (typeof frame.raceId === 'string' && frame.raceId) {
-      store.setRaceId(frame.raceId)
+    if (typeof frame.raceRef === 'string' && frame.raceRef) {
+      store.setRaceRef(frame.raceRef)
     }
 
     this.applyLiveTickDetails(frame)
@@ -551,7 +551,7 @@ class WebSocketService {
         })
         .map(([horseId]) => ({
           eventId: 'finish_line_crossed',
-          instanceId: `finish:${store.raceId ?? 'race'}:${horseId}`,
+          instanceId: `finish:${store.raceRef ?? 'race'}:${horseId}`,
           tickIndex: typeof tickIndex === 'number' ? tickIndex : Number.MAX_SAFE_INTEGER,
           affectedHorseIds: [horseId],
         }))
@@ -630,14 +630,14 @@ class WebSocketService {
       const headerJson = new TextDecoder().decode(headerBytes)
       const header = JSON.parse(headerJson) as {
         type?: string
-        raceId?: string
+        raceRef?: string
         seq?: number
         tickIndex?: number
         tickTs?: number
         protoVer?: number
         data?: RaceFrame['data']
       }
-      if (header.type !== 'race:tick' || !header.raceId) return
+      if (header.type !== 'race:tick' || !header.raceRef) return
       if (bodyBytes.byteLength % 4 !== 0) return
 
       const floats = new Float32Array(
@@ -650,7 +650,7 @@ class WebSocketService {
       const frame: RaceFrame = {
         type: 'race:tick',
         protoVer: header.protoVer,
-        raceId: header.raceId,
+        raceRef: header.raceRef,
         seq: header.seq,
         tickIndex: typeof header.tickIndex === 'number' ? header.tickIndex : 0,
         tickTs: header.tickTs,
@@ -667,7 +667,7 @@ class WebSocketService {
 
     switch (data.type) {
       case 'bets:open':
-        store.setRaceId(data.raceId)
+        store.setRaceRef(data.raceRef)
         store.setStatus(RaceStatus.BETS_OPEN)
         store.setInterpolationEnabled(true)
         store.setBetsOpenAtUtc(data.timestampUtc)
@@ -700,7 +700,7 @@ class WebSocketService {
 
       case 'race:finish':
         store.handleRaceFinish({
-          raceId: data.raceId,
+          raceRef: data.raceRef,
           timestampUtc: data.timestampUtc,
           winnerId: typeof data.winner === 'string' ? data.winner : undefined,
           finishOrder: Array.isArray(data.placements)
@@ -714,7 +714,7 @@ class WebSocketService {
 
       case 'race:winner-declared':
         store.handleWinnerDeclared({
-          raceId: data.raceId,
+          raceRef: data.raceRef,
           timestampUtc: data.timestampUtc,
           winnerId:
             typeof data.winnerId === 'string' ? data.winnerId : undefined,
@@ -735,10 +735,10 @@ class WebSocketService {
     this.ws.send(JSON.stringify(message))
   }
 
-  public requestSync(raceId: string, fromTick?: number) {
+  public requestSync(raceRef: string, fromTick?: number) {
     this.send({
       type: 'sync:request',
-      raceId,
+      raceRef,
       ...(fromTick !== undefined ? { fromTick } : {}),
     })
   }

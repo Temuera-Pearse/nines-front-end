@@ -2,6 +2,7 @@ import React from 'react'
 import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { useRaceStore } from '../../state/raceStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
+import { formatRaceRef } from '../../utils/raceRef'
 
 const Stat: React.FC<{
   label: string
@@ -27,7 +28,7 @@ const Stat: React.FC<{
 )
 
 export const CompactRaceInfo: React.FC = () => {
-  const { raceId, horses } = useRaceStore()
+  const { raceRef, horses } = useRaceStore()
   const headerTiming = useRaceHeaderTiming()
 
   const runnerCount = horses.length > 0 ? horses.length : HORSE_COUNT
@@ -82,9 +83,9 @@ export const CompactRaceInfo: React.FC = () => {
             <span
               className="compact-race-info__race-chip-text"
               style={{ color: '#fff', fontWeight: 900, fontSize: '10px' }}
-              title={raceId ?? 'RACE'}
+              title={formatRaceRef(raceRef)}
             >
-              {raceId ?? 'RACE'}
+              {formatRaceRef(raceRef)}
             </span>
           </div>
           <span style={{ color: '#64748b', fontWeight: 700, fontSize: '11px' }}>

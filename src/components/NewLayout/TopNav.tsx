@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useRaceStore } from '../../state/raceStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
+import { formatRaceRef } from '../../utils/raceRef'
 
 const NAV_LINKS = ['Home', 'My Bets', 'Leaderboard', 'Replays', 'How to Play']
 
 export const TopNav: React.FC = () => {
   const [active, setActive] = useState('Home')
-  const { raceId } = useRaceStore()
+  const { raceRef } = useRaceStore()
   const headerTiming = useRaceHeaderTiming()
 
   return (
@@ -49,7 +50,7 @@ export const TopNav: React.FC = () => {
             textTransform: 'uppercase',
           }}
         >
-          {raceId ?? 'Waiting for race'}
+          {formatRaceRef(raceRef)}
         </span>
       </div>
 

@@ -11,6 +11,7 @@ import { useWinnerPresentation } from '../../state/useWinnerPresentation'
 import { WinnerBanner } from '../WinnerBanner/WinnerBanner'
 import { HeaderRaceTimer } from '../Header/HeaderRaceTimer'
 import { selectCurrentEventHeadline } from '../../state/raceSelectors'
+import { formatRaceRef } from '../../utils/raceRef'
 import {
   AUTO_RACE_CAMERA_ENABLED,
   FINISH_Y,
@@ -43,7 +44,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     winner,
     winnerBannerHorseId,
     lastResult,
-    raceId,
+    raceRef,
     interpolationEnabled,
     horseEffects,
     finishLineMeters,
@@ -69,11 +70,11 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
   }
 
   useEffect(() => {
-    if (status !== 'running' || !raceId) {
+    if (status !== 'running' || !raceRef) {
       return
     }
 
-    const signalKey = `${raceId}:${status}`
+    const signalKey = `${raceRef}:${status}`
     if (startSignalRef.current === signalKey) {
       return
     }
@@ -85,7 +86,7 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
     }, 1800)
 
     return () => window.clearTimeout(timeoutId)
-  }, [raceId, status])
+  }, [raceRef, status])
 
   useEffect(() => {
     if (!AUTO_RACE_CAMERA_ENABLED) {
@@ -206,7 +207,9 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({
   return (
     <div className="race-track-frame">
       <div className="race-viewport-info" aria-live="polite">
-        <div className="race-chip race-chip-left">🏁 {raceId ?? 'RACE'}</div>
+        <div className="race-chip race-chip-left">
+          🏁 {formatRaceRef(raceRef)}
+        </div>
         <HeaderRaceTimer />
       </div>
 
