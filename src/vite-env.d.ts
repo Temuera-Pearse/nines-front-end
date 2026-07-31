@@ -17,6 +17,7 @@ interface ImportMetaEnv {
   readonly VITE_NINES_API_URL?: string
   readonly VITE_PUBLIC_VIEWER_MODE?: string
   readonly VITE_AUTH_ENABLED?: string
+  readonly VITE_KYC_UI_ENABLED?: string
 }
 
 interface ImportMeta {

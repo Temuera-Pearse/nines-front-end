@@ -1,4 +1,8 @@
 import { FRONTEND_AUTH_ENABLED } from '../config/features'
+import {
+  assertPlayerIntegrationConfiguration,
+  PLAYER_INTEGRATION_CONFIG,
+} from '../config/playerIntegration'
 
 export interface Auth0RuntimeConfig {
   domain: string
@@ -9,21 +13,13 @@ export interface Auth0RuntimeConfig {
   isEnabled: boolean
 }
 
-const domain = (import.meta.env.VITE_AUTH0_DOMAIN ?? '').trim()
-const clientId = (import.meta.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
-const audience = (import.meta.env.VITE_AUTH0_AUDIENCE ?? '').trim()
-const ninesApiUrl = (import.meta.env.VITE_NINES_API_URL ?? '').trim()
-const hasCompleteAuth0Config =
-  domain.length > 0 &&
-  clientId.length > 0 &&
-  audience.length > 0 &&
-  ninesApiUrl.length > 0
+assertPlayerIntegrationConfiguration()
 
 export const AUTH0_CONFIG: Auth0RuntimeConfig = {
-  domain,
-  clientId,
-  audience,
-  ninesApiUrl,
+  domain: PLAYER_INTEGRATION_CONFIG.auth0Domain,
+  clientId: PLAYER_INTEGRATION_CONFIG.auth0ClientId,
+  audience: PLAYER_INTEGRATION_CONFIG.auth0Audience,
+  ninesApiUrl: PLAYER_INTEGRATION_CONFIG.ninesApiUrl,
   cacheLocation: 'localstorage',
-  isEnabled: FRONTEND_AUTH_ENABLED && hasCompleteAuth0Config,
+  isEnabled: FRONTEND_AUTH_ENABLED,
 }

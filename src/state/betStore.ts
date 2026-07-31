@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { placeBet as placeBetApi } from '../api/bets'
 import { getDefaultHorseIds } from '../constants/raceParticipants'
 import { useRaceStore } from './raceStore'
 
@@ -41,12 +40,8 @@ export const useBetStore = create<BetState>((set, get) => ({
     }
     if (amount <= 0) throw new Error('Bet amount must be greater than 0')
 
-    await placeBetApi({
-      raceRef,
-      selectionId: selectedHorse,
-      stakeMinor: toUsdcMinorUnitString(amount),
-      currency: 'USDC',
-    })
+    void toUsdcMinorUnitString(amount)
+    throw new Error('Wager submission is unavailable in this frontend phase')
   },
 
   reset: () => set({ selectedHorse: null, amount: 0 }),

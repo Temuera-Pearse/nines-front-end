@@ -1,5 +1,4 @@
-import React, { Suspense } from 'react'
-import { useAppAuth } from '../../auth/AppAuthProvider'
+import React from 'react'
 import { RaceTrack } from '../../components/RaceTrack/RaceTrack'
 import { ResultsPanel } from '../../components/ResultsPanel/ResultsPanel'
 import type {
@@ -7,24 +6,9 @@ import type {
   Standing,
 } from '../../components/ResultsPanel/ResultsPanel'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
-import { PUBLIC_VIEWER_MODE } from '../../config/features'
+import { FRONTEND_AUTH_ENABLED, PUBLIC_VIEWER_MODE } from '../../config/features'
+import { MobileBottomNav } from './MobileBottomNav'
 import './MobileLayout.css'
-
-const PrivateCompactRaceInfo = !PUBLIC_VIEWER_MODE
-  ? React.lazy(() =>
-      import('../../components/NewLayout/CompactRaceInfo').then((module) => ({
-        default: module.CompactRaceInfo,
-      })),
-    )
-  : null
-
-const PrivateMobileSelectionSheet = !PUBLIC_VIEWER_MODE
-  ? React.lazy(() =>
-      import('./MobileSelectionSheet').then((module) => ({
-        default: module.MobileSelectionSheet,
-      })),
-    )
-  : null
 
 interface MobileLayoutProps {
   showFinishAnimation: boolean
@@ -43,7 +27,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   resultsCountdownSeconds,
   onCompleteResultsPhase,
 }) => {
-  const { hasConfirmedPlayer } = useAppAuth()
   const timing = useRaceHeaderTiming()
   const isRaceFocus =
     timing.key === 'running' ||
@@ -54,14 +37,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     <div
       className={`nines-mobile-layout${isRaceFocus ? ' nines-mobile-layout--race-focus' : ' nines-mobile-layout--selection-focus'}`}
     >
-      {PrivateCompactRaceInfo && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE ? (
-        <div className="nines-mobile-layout__status">
-          <Suspense fallback={null}>
-            <PrivateCompactRaceInfo />
-          </Suspense>
-        </div>
-      ) : null}
-
       <main className="nines-mobile-layout__stage" aria-label="Live race">
         <div className="nines-mobile-layout__track">
           <RaceTrack showFinishAnimation={showFinishAnimation} />
@@ -80,10 +55,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         )}
       </main>
 
-      {PrivateMobileSelectionSheet && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE ? (
-        <Suspense fallback={null}>
-          <PrivateMobileSelectionSheet timing={timing} />
-        </Suspense>
+      {FRONTEND_AUTH_ENABLED && !PUBLIC_VIEWER_MODE ? (
+        <MobileBottomNav />
       ) : null}
     </div>
   )

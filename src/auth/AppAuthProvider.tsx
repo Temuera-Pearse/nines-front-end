@@ -24,10 +24,11 @@ export interface AppAuthContextValue {
   isPlayerVerificationLoading: boolean
   authFlowError: string | null
   playerVerificationError: string | null
-  /** Compatibility alias. Private UI must use hasConfirmedPlayer. */
+  /** Compatibility alias for the Auth0 session. Player UI must use /v1/me state. */
   isAuthenticated: boolean
   user: AppAuthUser | null
   player: NinesPlayerIdentity | null
+  getAccessToken: () => Promise<string | null>
   login: () => Promise<void>
   signup: () => Promise<void>
   logout: () => void
@@ -47,6 +48,7 @@ export const defaultContextValue: AppAuthContextValue = {
   isAuthenticated: false,
   user: null,
   player: null,
+  getAccessToken: async () => null,
   login: noopAsync,
   signup: noopAsync,
   logout: noop,

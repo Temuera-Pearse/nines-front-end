@@ -59,16 +59,36 @@ function assertOptionalProductionUrl(
   assertProductionUrl(name, value, protocol)
 }
 
+function assertProductionApiUrl(name: string, value: string | undefined) {
+  const url = value?.trim()
+  if (!url) throw new Error(`${name} is required for authenticated production builds`)
+  if (url.startsWith('/')) return
+  assertProductionUrl(name, url, 'https')
+}
+
 function assertProductionBuildConfig(env: Record<string, string>) {
   const publicViewerMode =
     readBooleanEnv(env.VITE_PUBLIC_VIEWER_MODE) ?? true
   const authEnabled = readBooleanEnv(env.VITE_AUTH_ENABLED) ?? false
   const offlineMode = readBooleanEnv(env.VITE_OFFLINE) ?? false
 
-  if (!publicViewerMode && authEnabled) {
+  if (publicViewerMode && authEnabled) {
     throw new Error(
-      'Production auth-enabled builds must explicitly disable public viewer mode',
+      'Production auth-enabled builds must disable public viewer mode',
     )
+  }
+
+  if (authEnabled) {
+    for (const name of [
+      'VITE_AUTH0_DOMAIN',
+      'VITE_AUTH0_CLIENT_ID',
+      'VITE_AUTH0_AUDIENCE',
+    ]) {
+      if (!env[name]?.trim()) {
+        throw new Error(`${name} is required for authenticated production builds`)
+      }
+    }
+    assertProductionApiUrl('VITE_NINES_API_URL', env.VITE_NINES_API_URL)
   }
 
   if (offlineMode) return
@@ -145,6 +165,11 @@ export default defineConfig(({ command, mode }) => {
           secure: false,
         },
         '/auth': {
+          target: ninesApiProxyTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/v1': {
           target: ninesApiProxyTarget,
           changeOrigin: true,
           secure: false,

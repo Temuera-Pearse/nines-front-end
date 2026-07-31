@@ -17,6 +17,7 @@ describe('public launch guardrails', () => {
   const app = read('src/App.tsx')
   const authProvider = read('src/auth/AppAuthProvider.tsx')
   const auth0Provider = read('src/auth/Auth0AppAuthProvider.tsx')
+  const playerProvider = read('src/player/PlayerAccountProvider.tsx')
   const disabledRoutes = read('src/config/disabledRoutes.ts')
   const errorBoundary = read('src/components/ErrorBoundary/AppErrorBoundary.tsx')
   const headerTiming = read('src/state/useRaceHeaderTiming.ts')
@@ -49,7 +50,11 @@ describe('public launch guardrails', () => {
       auth0Provider,
       /<Auth0Provider[\s\S]*?<AuthStateBridge>\{children\}<\/AuthStateBridge>/,
     )
-    assert.match(auth0Provider, /fetch\(`\$\{baseUrl\}\/auth\/me`/)
+    assert.doesNotMatch(auth0Provider, /fetch\(|\/auth\/me/)
+    assert.match(
+      playerProvider,
+      /isEnabled &&\s*!PUBLIC_VIEWER_MODE[\s\S]*auth0SessionIsAuthenticated/s,
+    )
     assert.doesNotMatch(authProvider, /@auth0\/auth0-react/)
   })
 

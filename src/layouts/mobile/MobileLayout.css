@@ -10,6 +10,60 @@
   overflow: hidden;
 }
 
+.nines-mobile-nav {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  z-index: 30;
+  height: 62px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 12px 34px rgba(2, 6, 23, 0.48);
+}
+
+.nines-mobile-nav button {
+  min-width: 0;
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: center;
+  justify-content: center;
+  gap: 1px 6px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.nines-mobile-nav button:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.nines-mobile-nav small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.nines-mobile-layout:has(.nines-mobile-nav) .nines-mobile-layout__stage {
+  margin-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
 .nines-mobile-layout__status {
   position: relative;
   z-index: 4;

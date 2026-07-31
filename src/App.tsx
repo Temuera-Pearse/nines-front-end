@@ -1,5 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react'
-import { useAppAuth } from './auth/AppAuthProvider'
+import React, { useEffect, useState } from 'react'
 import { RaceStatus, useRaceStore } from './state/raceStore'
 import { wsService } from './ws/websocket'
 import { getDefaultHorseIds } from './constants/raceParticipants'
@@ -20,15 +19,9 @@ import {
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { DesktopLayout } from './layouts/desktop/DesktopLayout'
 import { MobileLayout } from './layouts/mobile/MobileLayout'
+import { AccountDrawer } from './player/components/AccountDrawer'
+import './player/components/Account.css'
 import './App.css'
-
-const PrivateAddFundsDrawer = !PUBLIC_VIEWER_MODE
-  ? React.lazy(() =>
-      import('./components/Funding/AddFundsDrawer').then((module) => ({
-        default: module.AddFundsDrawer,
-      })),
-    )
-  : null
 
 /**
  * Derive the visible page from wall-clock UTC seconds.
@@ -49,7 +42,6 @@ const AppLoadingState: React.FC<{ message: string }> = ({ message }) => (
 )
 
 function App() {
-  const { hasConfirmedPlayer, isEnabled, isLoading } = useAppAuth()
   const status = useRaceStore((s) => s.status)
   const raceRef = useRaceStore((s) => s.raceRef)
   const resultsWinner = useRaceStore(selectResultsWinner)
@@ -252,13 +244,7 @@ function App() {
       ? 'connecting'
       : utcPagePhase(clockSec)
 
-  const isRestoringAuth = isEnabled && isLoading
-
   const renderPageContent = () => {
-    if (isRestoringAuth) {
-      return <AppLoadingState message="Restoring your session..." />
-    }
-
     // If we have no race data yet, show the connecting screen
     if (!raceRef && status === RaceStatus.IDLE) {
       return <AppLoadingState message="Connecting to race server..." />
@@ -295,14 +281,7 @@ function App() {
       <div key={pagePhase} className="page-enter flex-1 min-h-0">
         {renderPageContent()}
       </div>
-      {PrivateAddFundsDrawer &&
-      hasConfirmedPlayer &&
-      !isRestoringAuth &&
-      !PUBLIC_VIEWER_MODE ? (
-        <Suspense fallback={null}>
-          <PrivateAddFundsDrawer />
-        </Suspense>
-      ) : null}
+      {!PUBLIC_VIEWER_MODE ? <AccountDrawer /> : null}
     </div>
   )
 }

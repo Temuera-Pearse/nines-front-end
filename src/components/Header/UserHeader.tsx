@@ -3,7 +3,6 @@ import { AppAuthUser } from '../../auth/AppAuthProvider'
 
 interface UserHeaderProps {
   user: AppAuthUser | null
-  balancePreview?: string
 }
 
 function getInitials(name: string): string {
@@ -14,7 +13,7 @@ function getInitials(name: string): string {
 }
 
 export const UserHeader: React.FC<UserHeaderProps> = React.memo(
-  function UserHeader({ user, balancePreview }) {
+  function UserHeader({ user }) {
     const displayName = user?.name ?? 'Nines Player'
     const email = user?.email ?? 'Signed in'
     const initials = getInitials(displayName)
@@ -31,9 +30,6 @@ export const UserHeader: React.FC<UserHeaderProps> = React.memo(
             <div className="nines-dropdown-user-role">
               {role === 'player' ? 'Player session confirmed' : role}
             </div>
-          ) : null}
-          {balancePreview ? (
-            <div className="nines-dropdown-user-balance">{balancePreview}</div>
           ) : null}
         </div>
       </div>

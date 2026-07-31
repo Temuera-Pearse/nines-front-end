@@ -1,20 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useAppAuth } from '../../auth/AppAuthProvider'
 import { useRaceStore } from '../../state/raceStore'
-import { formatUsdcBalance, useFundingStore } from '../../state/fundingStore'
 import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 import { HORSE_COUNT } from '../../constants/raceParticipants'
 import { AccountDropdown } from './AccountDropdown'
 import { NinesLogo } from './NinesLogo'
 import { formatRaceRef } from '../../utils/raceRef'
-
-const MENU_HASHES: Record<string, string> = {
-  'Add Funds': '#wallet',
-  Vault: '#vault',
-  Transactions: '#transactions',
-  'My Bets': '#my-bets',
-  Settings: '#settings',
-}
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean)
@@ -59,17 +50,12 @@ const HeaderStat: React.FC<{
 export const AppHeader: React.FC = React.memo(function AppHeader() {
   const { logout, user } = useAppAuth()
   const { raceRef, horses, raceStartUtc, status } = useRaceStore()
-  const balanceUsdc = useFundingStore((state) => state.balanceUsdc)
-  const resetToAddFunds = useFundingStore((state) => state.resetToAddFunds)
   const headerTiming = useRaceHeaderTiming()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [now, setNow] = useState(() => new Date())
   const menuBoundaryRef = useRef<HTMLDivElement | null>(null)
   const displayName = user?.name ?? 'Nines Player'
   const runnerCount = horses.length > 0 ? horses.length : HORSE_COUNT
-  const totalPool = 0
-  const housePct = 15
-  const netPool = Math.round(totalPool * (1 - housePct / 100))
   const debugClock = formatClock24(now)
   const raceElapsed =
     status === 'running' ? formatRaceElapsed(raceStartUtc, now.getTime()) : '--:--'
@@ -83,16 +69,10 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
   }, [])
 
   const handleNavigate = (target: string) => {
-    const hash = MENU_HASHES[target]
-    if (hash) {
-      window.location.hash = hash
+    if (target === 'Account') {
+      window.location.hash = '#account'
     }
     setIsMenuOpen(false)
-  }
-
-  const handleAddFundsClick = () => {
-    resetToAddFunds()
-    window.location.hash = '#wallet'
   }
 
   const handleLogout = () => {
@@ -117,21 +97,6 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
             </div>
 
             <div className="nines-header-race-block nines-header-race-block--stats">
-              <HeaderStat
-                label="Pool"
-                value={`$${totalPool.toLocaleString()}`}
-                accentClass="nines-header-stat-value--blue"
-              />
-              <HeaderStat
-                label="House"
-                value={`${housePct}%`}
-                accentClass="nines-header-stat-value--orange"
-              />
-              <HeaderStat
-                label="Net"
-                value={`$${netPool.toLocaleString()}`}
-                accentClass="nines-header-stat-value--green"
-              />
               <HeaderStat
                 label="State"
                 value={headerTiming.stateLabel}
@@ -160,23 +125,6 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
             </div>
           </div>
 
-          <div className="nines-header-center">
-            <div className="nines-balance-pill" aria-label="Account balance">
-              <span className="nines-balance-label">Balance</span>
-              <span className="nines-balance-value">
-                {formatUsdcBalance(balanceUsdc)}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className="nines-header-menu-button nines-header-menu-button--primary"
-              onClick={handleAddFundsClick}
-            >
-              Add Funds
-            </button>
-          </div>
-
           <div className="nines-header-actions">
             <div className="nines-account-menu" ref={menuBoundaryRef}>
               <button
@@ -192,7 +140,6 @@ export const AppHeader: React.FC = React.memo(function AppHeader() {
 
               <AccountDropdown
                 boundaryRef={menuBoundaryRef}
-                balancePreview={`Available balance ${formatUsdcBalance(balanceUsdc)}`}
                 isOpen={isMenuOpen}
                 onClose={() => setIsMenuOpen(false)}
                 onNavigate={handleNavigate}

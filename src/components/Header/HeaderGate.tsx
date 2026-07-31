@@ -29,14 +29,17 @@ const HeaderLoadingState: React.FC = React.memo(function HeaderLoadingState() {
 })
 
 export const HeaderGate: React.FC = React.memo(function HeaderGate() {
-  const { hasConfirmedPlayer, isLoading, isPlayerVerificationLoading } =
-    useAppAuth()
+  const { auth0SessionIsAuthenticated, isLoading } = useAppAuth()
 
-  if (isLoading || isPlayerVerificationLoading) {
+  if (isLoading) {
     return <HeaderLoadingState />
   }
 
-  if (PrivateAppHeader && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE) {
+  if (
+    PrivateAppHeader &&
+    auth0SessionIsAuthenticated &&
+    !PUBLIC_VIEWER_MODE
+  ) {
     return (
       <Suspense fallback={<HeaderLoadingState />}>
         <PrivateAppHeader />

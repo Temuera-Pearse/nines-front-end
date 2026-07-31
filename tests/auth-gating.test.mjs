@@ -6,305 +6,146 @@ import assert from 'node:assert/strict'
 const root = new URL('..', import.meta.url).pathname
 const read = (path) => readFileSync(join(root, path), 'utf8')
 
-function confirmedPlayerAccess({
-  auth0SessionIsAuthenticated,
-  verificationStatus,
-  roles = [],
-}) {
-  return (
-    auth0SessionIsAuthenticated &&
-    verificationStatus === 'confirmed' &&
-    roles.includes('player')
-  )
-}
-
-describe('confirmed player access rule', () => {
+describe('Auth0 and player integration boundary', () => {
   const main = read('src/main.tsx')
+  const app = read('src/App.tsx')
   const authProvider = read('src/auth/AppAuthProvider.tsx')
   const auth0Provider = read('src/auth/Auth0AppAuthProvider.tsx')
   const authConfig = read('src/auth/config.ts')
+  const playerProvider = read('src/player/PlayerAccountProvider.tsx')
+  const client = read('src/api/ninesApiClient.ts')
   const features = read('src/config/features.ts')
-  const disabledRoutes = read('src/config/disabledRoutes.ts')
+  const playerIntegration = read('src/config/playerIntegration.ts')
+  const popup = read('src/kyc/popup/kycPopup.ts')
   const envExample = read('.env.example')
-  const publicHeader = read('src/components/Header/PublicHeader.tsx')
-  const appHeader = read('src/components/Header/AppHeader.tsx')
-  const viteConfig = read('vite.config.ts')
-  const mediaQueryHook = read('src/hooks/useMediaQuery.ts')
-  const gitignore = read('.gitignore')
 
-  it('denies logged-out, pending, failed, and non-player sessions', () => {
-    assert.equal(
-      confirmedPlayerAccess({
-        auth0SessionIsAuthenticated: false,
-        verificationStatus: 'idle',
-      }),
-      false,
-    )
-    assert.equal(
-      confirmedPlayerAccess({
-        auth0SessionIsAuthenticated: true,
-        verificationStatus: 'loading',
-      }),
-      false,
-    )
-    assert.equal(
-      confirmedPlayerAccess({
-        auth0SessionIsAuthenticated: true,
-        verificationStatus: 'failed',
-      }),
-      false,
-    )
-    assert.equal(
-      confirmedPlayerAccess({
-        auth0SessionIsAuthenticated: true,
-        verificationStatus: 'confirmed',
-        roles: ['spectator'],
-      }),
-      false,
-    )
-  })
-
-  it('allows only an Auth0 session confirmed as a Nines player', () => {
-    assert.equal(
-      confirmedPlayerAccess({
-        auth0SessionIsAuthenticated: true,
-        verificationStatus: 'confirmed',
-        roles: ['player'],
-      }),
-      true,
-    )
-  })
-
-  it('implements the same rule in the auth provider', () => {
+  it('keeps Auth0 lazy and disabled in public viewer mode', () => {
+    assert.match(authProvider, /const EnabledAppAuthProvider = AUTH0_CONFIG\.isEnabled/)
+    assert.match(authProvider, /if \(!EnabledAppAuthProvider \|\| !AUTH0_CONFIG\.isEnabled\)/)
     assert.match(
-      authProvider,
-      /Auth0AppAuthProvider/,
+      playerIntegration,
+      /!publicViewerMode && \(authEnabledFlag \?\? !isProduction\)/,
     )
-    assert.match(
-      auth0Provider,
-      /const hasConfirmedPlayer\s*=\s*auth0SessionIsAuthenticated\s*&&\s*playerVerification\.status === 'confirmed'\s*&&\s*player !== null\s*&&\s*player\.roles\.includes\('player'\)/s,
-    )
-    assert.match(
-      auth0Provider,
-      /const isPlayerVerificationLoading\s*=\s*auth0SessionIsAuthenticated\s*&&\s*\(playerVerification\.status === 'idle'\s*\|\|\s*playerVerification\.status === 'loading'\)/s,
-    )
-    assert.match(
-      auth0Provider,
-      /isAuthenticated:\s*hasConfirmedPlayer/,
-    )
-    assert.match(
-      auth0Provider,
-      /Nines API auth check returned an invalid player identity/,
-    )
-  })
-
-  it('requires and requests the custom Nines API audience', () => {
-    assert.match(
-      envExample,
-      /^VITE_AUTH0_AUDIENCE=$/m,
-    )
-    assert.match(
-      authConfig,
-      /audience\.length > 0[\s\S]*ninesApiUrl\.length > 0/s,
-    )
-    assert.match(
-      auth0Provider,
-      /getAccessTokenSilently\(\{\s*authorizationParams: \{\s*audience: AUTH0_CONFIG\.audience/s,
-    )
-  })
-
-  it('defaults production public viewer builds to auth disabled', () => {
-    assert.match(features, /export const PUBLIC_VIEWER_MODE\s*=[\s\S]*IS_PRODUCTION \? true : false/)
-    assert.match(features, /export const FRONTEND_AUTH_ENABLED\s*=[\s\S]*!PUBLIC_VIEWER_MODE/)
-    assert.match(features, /IS_PRODUCTION \? false : true/)
-    assert.match(authConfig, /isEnabled: FRONTEND_AUTH_ENABLED && hasCompleteAuth0Config/)
     assert.match(envExample, /^VITE_PUBLIC_VIEWER_MODE=true$/m)
     assert.match(envExample, /^VITE_AUTH_ENABLED=false$/m)
   })
 
-  it('uses same-origin Vite proxies for browser REST/auth requests and the configured WebSocket', () => {
+  it('uses Auth0 only for authentication and access-token retrieval', () => {
+    assert.match(auth0Provider, /getAccessTokenSilently/)
+    assert.match(auth0Provider, /audience: AUTH0_CONFIG\.audience/)
+    assert.match(auth0Provider, /scope: 'openid profile email'/)
+    assert.doesNotMatch(auth0Provider, /\/auth\/me/)
+    assert.doesNotMatch(auth0Provider, /roles\.includes/)
+    assert.match(authProvider, /getAccessToken: \(\) => Promise<string \| null>/)
+  })
+
+  it('fails clearly when authenticated runtime configuration is incomplete', () => {
+    assert.match(authConfig, /assertPlayerIntegrationConfiguration\(\)/)
     assert.match(
-      envExample,
-      /^VITE_DEV_PROXY_TARGET=https:\/\/example-race-api\.invalid$/m,
+      playerIntegration,
+      /export function assertPlayerIntegrationConfiguration/,
     )
-    assert.match(
-      envExample,
-      /^VITE_NINES_BACKEND_URL=https:\/\/example-race-api\.invalid$/m,
-    )
-    assert.match(envExample, /^VITE_NINES_API_URL=$/m)
-    assert.doesNotMatch(envExample, /^VITE_NINES_API_URL=http:\/\/localhost/m)
-    assert.match(envExample, /^NINES_API_PROXY_TARGET=http:\/\/127\.0\.0\.1:3002$/m)
-    assert.match(viteConfig, /const ninesApiProxyTarget = env\.NINES_API_PROXY_TARGET \|\| proxyTarget/)
-    assert.match(viteConfig, /'\/auth':\s*{\s*target: ninesApiProxyTarget/s)
-    assert.match(
-      envExample,
-      /^VITE_NINES_WS_URL=wss:\/\/example-race-api\.invalid\/ws$/m,
-    )
-  })
-
-  it('serves LAN development over mkcert-backed HTTPS', () => {
-    assert.match(gitignore, /^\.certs\/$/m)
-    assert.match(viteConfig, /readLocalHttpsConfig/)
-    assert.match(viteConfig, /\.certs\/nines-local\.pem/)
-    assert.match(viteConfig, /\.certs\/nines-local-key\.pem/)
-    assert.match(
-      viteConfig,
-      /https: command === 'serve' \? readLocalHttpsConfig\(\) : undefined/,
-    )
-  })
-
-  it('wraps React startup in an error boundary instead of white-screening', () => {
-    assert.match(main, /<AppErrorBoundary>/)
-    assert.match(main, /<AppAuthProvider>/)
-    assert.match(
-      read('src/components/ErrorBoundary/AppErrorBoundary.tsx'),
-      /Nines could not start/,
-    )
-  })
-
-  it('guards mobile media query APIs for older Safari', () => {
-    assert.match(mediaQueryHook, /!window\.matchMedia/)
-    assert.match(mediaQueryHook, /mediaQuery\.addListener\(handleChange\)/)
-    assert.match(mediaQueryHook, /mediaQuery\.removeListener\(handleChange\)/)
-  })
-
-  it('shows Auth0 and player verification failures instead of silently reloading', () => {
-    assert.match(authProvider, /authFlowError:\s*string \| null/)
-    assert.match(auth0Provider, /const authFlowError = error\?\.message \?\? null/)
-    assert.match(
-      publicHeader,
-      /Nines service unavailable: \{visibleAuthError\}/,
-    )
-  })
-
-  it('does not render public login and register header actions', () => {
-    assert.doesNotMatch(publicHeader, /nines-header-public-actions/)
-    assert.doesNotMatch(publicHeader, />\s*Login\s*</)
-    assert.doesNotMatch(publicHeader, />\s*Register\s*</)
-    assert.doesNotMatch(publicHeader, /void login\(\)/)
-    assert.doesNotMatch(publicHeader, /void signup\(\)/)
-  })
-
-  it('keeps the race timer out of the top header bars', () => {
-    assert.doesNotMatch(publicHeader, /HeaderRaceTimer/)
-    assert.doesNotMatch(publicHeader, /nines-header-public-race-row/)
-    assert.doesNotMatch(appHeader, /HeaderRaceTimer/)
-  })
-
-  it('redirects disabled auth and private routes before auth can start', () => {
-    assert.match(main, /redirectDisabledFrontendRoute\(\)/)
-    for (const route of [
-      '/login',
-      '/register',
-      '/signup',
-      '/callback',
-      '/account',
-      '/profile',
-      '/settings',
-      '/wallet',
-      '/bets',
-      '/history',
-      '/transactions',
-      '/deposit',
-      '/withdraw',
-      '/admin',
+    for (const key of [
+      'VITE_AUTH0_DOMAIN',
+      'VITE_AUTH0_CLIENT_ID',
+      'VITE_AUTH0_AUDIENCE',
+      'VITE_NINES_API_URL',
     ]) {
-      assert.match(disabledRoutes, new RegExp(`'${route}'`))
+      assert.match(playerIntegration, new RegExp(key))
     }
+  })
+
+  it('calls protected endpoints only for an authenticated non-public viewer', () => {
     assert.match(
-      disabledRoutes,
-      /if \(FRONTEND_AUTH_ENABLED && !PUBLIC_VIEWER_MODE\) return false/,
+      playerProvider,
+      /const mayLoadProtectedData =\s*isEnabled &&\s*!PUBLIC_VIEWER_MODE &&\s*!isAuthLoading &&\s*auth0SessionIsAuthenticated/s,
     )
+    assert.match(playerProvider, /if \(mayLoadProtectedData\) \{\s*void refreshAll\(\)/s)
+    assert.match(read('src/player/api/getCurrentPlayer.ts'), /'\/v1\/me'/)
+    assert.match(read('src/kyc/api/getKycProfile.ts'), /'\/v1\/me\/kyc'/)
     assert.match(
-      disabledRoutes,
-      /window\.history\.replaceState\(\{\}, document\.title, '\/'\)/,
+      read('src/kyc/api/startKycSession.ts'),
+      /'\/v1\/me\/kyc\/sessions'/,
     )
+  })
+
+  it('attaches bearer and idempotency headers without logging tokens', () => {
+    assert.match(client, /Authorization: `Bearer \$\{accessToken\}`/)
+    assert.match(client, /headers\.set\('Idempotency-Key', options\.idempotencyKey\)/)
+    assert.doesNotMatch(client, /console\./)
+  })
+
+  it('deduplicates, cancels, and refreshes both resources after KYC start', () => {
+    assert.match(playerProvider, /if \(playerRequestRef\.current\) return playerRequestRef\.current/)
+    assert.match(playerProvider, /if \(kycRequestRef\.current\) return kycRequestRef\.current/)
+    assert.match(playerProvider, /playerAbortRef\.current\?\.abort\(\)/)
+    assert.match(playerProvider, /kycAbortRef\.current\?\.abort\(\)/)
+    assert.match(playerProvider, /idempotencyKeyRef\.current \?\?/)
+    assert.match(playerProvider, /await refreshAll\(\)/)
+    assert.match(playerProvider, /idempotencyKeyRef\.current = null/)
+    assert.match(playerProvider, /reservePopup\(\)/)
+    assert.match(playerProvider, /monitorReservedPopup\(session, popup\)/)
+    assert.match(
+      playerProvider,
+      /if \(result\.status === 'completed'\)[\s\S]*?await refreshAll\(\)/,
+    )
+    assert.match(popup, /event\.origin !== targetUrl\.origin/)
+    assert.match(popup, /event\.source !== input\.popup/)
+    assert.match(popup, /message\.sessionId === sessionId/)
+    assert.match(popup, /removeEventListener\('message', onMessage\)/)
+  })
+
+  it('does not pause or crash the race viewer for account loading', () => {
+    assert.match(main, /<PlayerAccountProvider>/)
+    assert.match(main, /<AppErrorBoundary>/)
+    assert.match(app, /<MobileLayout \{\.\.\.layoutProps\} \/>/)
+    assert.match(app, /<DesktopLayout \{\.\.\.layoutProps\} \/>/)
+    assert.doesNotMatch(app, /Restoring your session/)
   })
 })
 
-describe('private component rendering boundaries', () => {
+describe('responsive account surfaces and deferred operations', () => {
   const app = read('src/App.tsx')
+  const appHeader = read('src/components/Header/AppHeader.tsx')
+  const accountDropdown = read('src/components/Header/AccountDropdown.tsx')
+  const publicHeader = read('src/components/Header/PublicHeader.tsx')
   const desktopLayout = read('src/layouts/desktop/DesktopLayout.tsx')
   const mobileLayout = read('src/layouts/mobile/MobileLayout.tsx')
-  const mobileSelectionSheet = read(
-    'src/layouts/mobile/MobileSelectionSheet.tsx',
-  )
-  const headerGate = read('src/components/Header/HeaderGate.tsx')
-  const bettingModel = read(
-    'src/components/BettingArea/useBettingAreaModel.ts',
-  )
-  const bettingPanel = read('src/components/BettingArea/BettingPanel.tsx')
-  const betStore = read('src/state/betStore.ts')
+  const mobileNav = read('src/layouts/mobile/MobileBottomNav.tsx')
+  const drawer = read('src/player/components/AccountDrawer.tsx')
 
-  it('keeps the guest spectator race viewer and leaderboard outside the player gate', () => {
-    assert.match(
-      desktopLayout,
-      /<div className="nines-race-track-panel">\s*<RaceTrack[\s\S]*?<\/div>[\s\S]*?<div className="nines-race-betting">[\s\S]*?<LiveRaceLeaderboard \/>/s,
-    )
-    assert.match(desktopLayout, /<ResultsPanel/)
-    assert.match(desktopLayout, /<OnTrackEventsCard \/>/)
-    assert.match(desktopLayout, /<BottomWidgets \/>/)
-    assert.match(mobileLayout, /<RaceTrack/)
+  it('offers login without redirecting an unauthenticated race viewer', () => {
+    assert.match(publicHeader, /\{isEnabled \? \(/)
+    assert.match(publicHeader, /Sign in/)
+    assert.doesNotMatch(publicHeader, /window\.location\.assign/)
   })
 
-  it('gates private app components independently of viewport size', () => {
-    assert.match(
-      desktopLayout,
-      /const PrivateCompactRaceInfo = !PUBLIC_VIEWER_MODE[\s\S]*?import\('\.\.\/\.\.\/components\/NewLayout\/CompactRaceInfo'\)/s,
-    )
-    assert.match(
-      desktopLayout,
-      /\{PrivateCompactRaceInfo && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE \?\s*\(\s*<div className="nines-race-mobile-status">[\s\S]*?<PrivateCompactRaceInfo \/>[\s\S]*?<\/div>\s*\)\s*: null\}/s,
-    )
-    assert.match(
-      mobileLayout,
-      /const PrivateMobileSelectionSheet = !PUBLIC_VIEWER_MODE[\s\S]*?import\('\.\/MobileSelectionSheet'\)/s,
-    )
-    assert.match(
-      mobileLayout,
-      /\{PrivateCompactRaceInfo && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE \?\s*\(\s*<div className="nines-mobile-layout__status">[\s\S]*?<PrivateCompactRaceInfo \/>[\s\S]*?<\/div>\s*\)\s*: null\}/s,
-    )
-    assert.match(
-      mobileLayout,
-      /\{PrivateMobileSelectionSheet && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE \?\s*\(\s*<Suspense fallback=\{null\}>[\s\S]*?<PrivateMobileSelectionSheet timing=\{timing\} \/>[\s\S]*?<\/Suspense>\s*\)\s*: null\}/s,
-    )
-    assert.match(mobileSelectionSheet, /useBettingAreaModel\(\)/)
-    assert.match(
-      app,
-      /const PrivateAddFundsDrawer = !PUBLIC_VIEWER_MODE[\s\S]*?import\('\.\/components\/Funding\/AddFundsDrawer'\)/s,
-    )
-    assert.match(
-      app,
-      /\{PrivateAddFundsDrawer &&[\s\S]*?hasConfirmedPlayer &&[\s\S]*?!isRestoringAuth &&[\s\S]*?!PUBLIC_VIEWER_MODE \?\s*\(\s*<Suspense fallback=\{null\}>[\s\S]*?<PrivateAddFundsDrawer \/>[\s\S]*?<\/Suspense>\s*\) : null\}/s,
-    )
-    assert.doesNotMatch(app, /matchMedia|innerWidth|screen\.width/)
+  it('uses the existing desktop dropdown to open the account drawer', () => {
+    assert.match(accountDropdown, /Account and verification/)
+    assert.match(appHeader, /window\.location\.hash = '#account'/)
+    assert.match(app, /<AccountDrawer \/>/)
   })
 
-  it('renders the account header only for a confirmed player', () => {
-    assert.match(
-      headerGate,
-      /const PrivateAppHeader = !PUBLIC_VIEWER_MODE[\s\S]*?import\('\.\/AppHeader'\)/s,
-    )
-    assert.match(
-      headerGate,
-      /if \(isLoading \|\| isPlayerVerificationLoading\)[\s\S]*?if \(PrivateAppHeader && hasConfirmedPlayer && !PUBLIC_VIEWER_MODE\)/s,
-    )
+  it('provides compact mobile Race, Selection, and Account navigation', () => {
+    assert.match(mobileLayout, /<MobileBottomNav \/>/)
+    assert.match(mobileNav, />\s*Race\s*</)
+    assert.match(mobileNav, /Selection/)
+    assert.match(mobileNav, /Unavailable/)
+    assert.match(mobileNav, /Account/)
   })
 
-  it('defensively gates active and dormant betting code', () => {
-    assert.match(
-      bettingModel,
-      /if \(!hasConfirmedPlayer\)\s*{\s*setMessage\('Please log in to place bets'\)\s*return/s,
-    )
-    assert.match(
-      bettingModel,
-      /isAuthenticated:\s*hasConfirmedPlayer/,
-    )
-    assert.match(
-      bettingPanel,
-      /if \(!hasConfirmedPlayer\)\s*{\s*return null\s*}/s,
-    )
-    assert.match(betStore, /getDefaultHorseIds/)
-    assert.match(betStore, /Invalid horse selection/)
+  it('manages drawer focus and keyboard dismissal', () => {
+    assert.match(drawer, /role="dialog"/)
+    assert.match(drawer, /aria-modal="true"/)
+    assert.match(drawer, /event\.key === 'Escape'/)
+    assert.match(drawer, /event\.key !== 'Tab'/)
+    assert.match(drawer, /previousFocusRef\.current\?\.focus\(\)/)
+  })
+
+  it('keeps fake money and wager actions out of reachable layouts', () => {
+    assert.doesNotMatch(app, /AddFundsDrawer/)
+    assert.doesNotMatch(appHeader, /useFundingStore|Add Funds|balanceUsdc/)
+    assert.doesNotMatch(desktopLayout, /BettingArea/)
+    assert.doesNotMatch(mobileLayout, /MobileSelectionSheet/)
   })
 })
