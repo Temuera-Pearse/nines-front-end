@@ -32,7 +32,7 @@ describe('public launch guardrails', () => {
   const websocket = read('src/ws/websocket.ts')
   const viteConfig = read('vite.config.ts')
   const headers = read('public/_headers')
-  const redirects = read('public/_redirects')
+  const wranglerConfig = JSON.parse(read('wrangler.jsonc'))
   const index = read('index.html')
   const manifest = read('public/site.webmanifest')
 
@@ -63,7 +63,18 @@ describe('public launch guardrails', () => {
     assert.match(disabledRoutes, /'\/wallet'/)
     assert.match(disabledRoutes, /isDisabledFrontendRoute/)
     assert.match(disabledRoutes, /replaceState\(\{\}, document\.title, '\/'\)/)
-    assert.match(redirects, /^\/\* \/index\.html 200$/m)
+  })
+
+  it('configures Workers SPA fallback without overriding dashboard variables', () => {
+    assert.equal(wranglerConfig.name, 'nines-front-end')
+    assert.equal(wranglerConfig.assets.directory, './dist')
+    assert.equal(
+      wranglerConfig.assets.not_found_handling,
+      'single-page-application',
+    )
+    assert.equal(wranglerConfig.keep_vars, true)
+    assert.equal(Object.hasOwn(wranglerConfig, 'vars'), false)
+    assert.equal(Object.hasOwn(wranglerConfig, 'main'), false)
   })
 
   it('keeps mobile and desktop auth controls absent from public surfaces', () => {
