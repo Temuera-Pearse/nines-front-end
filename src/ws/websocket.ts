@@ -73,6 +73,9 @@ interface RaceInfoMsg {
   horseOrder: string[]
   config?: Record<string, unknown>
   currentTickIndex?: number
+  bettingOpensAt?: string
+  bettingClosesAt?: string
+  phase?: 'idle' | 'countdown' | 'race_starting' | 'race_running' | 'race_finished' | 'results_showing'
 }
 
 interface RaceStartMsg {
@@ -373,6 +376,8 @@ class WebSocketService {
     }
 
     store.setRaceRef(msg.raceRef)
+    if (msg.bettingOpensAt) store.setBetsOpenAtUtc(msg.bettingOpensAt)
+    if (msg.bettingClosesAt) store.setBetsCloseAtUtc(msg.bettingClosesAt)
     if (Array.isArray(msg.horseOrder)) {
       this.setHorseOrder(msg.horseOrder)
       this.ensureHorsesInitialized(msg.horseOrder)
@@ -392,6 +397,14 @@ class WebSocketService {
       typeof msg.currentTickIndex === 'number' ? msg.currentTickIndex : -1
     if (currentTickIndex >= 0) {
       this.requestSync(msg.raceRef)
+    } else if (msg.phase === 'race_starting') {
+      store.setStatus(RaceStatus.BETS_CLOSED)
+    } else if (msg.phase === 'race_finished' || msg.phase === 'results_showing') {
+      store.setStatus(RaceStatus.FINISHED)
+    } else if (msg.bettingClosesAt && Date.now() < Date.parse(msg.bettingClosesAt)) {
+      store.setStatus(RaceStatus.BETS_OPEN)
+    } else if (msg.bettingClosesAt) {
+      store.setStatus(RaceStatus.BETS_CLOSED)
     }
   }
 

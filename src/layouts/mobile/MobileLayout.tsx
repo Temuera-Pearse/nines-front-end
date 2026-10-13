@@ -9,6 +9,7 @@ import { useRaceHeaderTiming } from '../../state/useRaceHeaderTiming'
 import { FRONTEND_AUTH_ENABLED, PUBLIC_VIEWER_MODE } from '../../config/features'
 import { MobileBottomNav } from './MobileBottomNav'
 import './MobileLayout.css'
+import { PlayerGameplayPanel } from '../../components/Gameplay/PlayerGameplayPanel'
 
 interface MobileLayoutProps {
   showFinishAnimation: boolean
@@ -54,6 +55,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           </div>
         )}
       </main>
+
+      <div className="nines-mobile-layout__gameplay">
+        <PlayerGameplayPanel />
+      </div>
 
       {FRONTEND_AUTH_ENABLED && !PUBLIC_VIEWER_MODE ? (
         <MobileBottomNav />

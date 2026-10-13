@@ -153,6 +153,12 @@ function App() {
         // remain unavailable rather than receiving a synthetic identity on read.
         if (!current.raceRef) return
         store.setRaceRef(current.raceRef)
+        if (typeof current.bettingOpensAt === 'string') {
+          store.setBetsOpenAtUtc(current.bettingOpensAt)
+        }
+        if (typeof current.bettingClosesAt === 'string') {
+          store.setBetsCloseAtUtc(current.bettingClosesAt)
+        }
         applyRaceGeometry(
           current.config as Record<string, unknown> | undefined,
           current.finishLine,
@@ -208,12 +214,21 @@ function App() {
           store.setRaceStartUtc(start)
           store.setInterpolationEnabled(true)
           store.setStatus(RaceStatus.RUNNING)
-        } else if (useRaceStore.getState().status === RaceStatus.IDLE) {
-          // If backend doesn't provide phase timestamps, default to betsOpen.
+        } else if (current.phase === 'race_starting' || current.phase === 'race_running') {
+          store.setStatus(current.phase === 'race_running' ? RaceStatus.RUNNING : RaceStatus.BETS_CLOSED)
+        } else if (current.phase === 'race_finished' || current.phase === 'results_showing') {
+          store.setStatus(RaceStatus.FINISHED)
+        } else if (typeof current.bettingClosesAt === 'string' &&
+          Date.now() < Date.parse(current.bettingClosesAt)) {
           store.setStatus(RaceStatus.BETS_OPEN)
+        } else if (useRaceStore.getState().status === RaceStatus.IDLE) {
+          store.setStatus(RaceStatus.BETS_CLOSED)
         }
 
-        if (useRaceStore.getState().horses.length === 0) {
+        if (Array.isArray(current.entrants) && current.entrants.length > 0) {
+          store.setHorseOrder(current.entrants.map((entrant) => entrant.id))
+          store.setHorses(current.entrants.map((entrant) => ({ id: entrant.id, position: 0 })))
+        } else if (useRaceStore.getState().horses.length === 0) {
           store.setHorses(
             getDefaultHorseIds().map((id) => ({
               id,

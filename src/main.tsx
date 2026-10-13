@@ -5,6 +5,7 @@ import { AppAuthProvider } from './auth/AppAuthProvider'
 import { AppErrorBoundary } from './components/ErrorBoundary/AppErrorBoundary'
 import { redirectDisabledFrontendRoute } from './config/disabledRoutes'
 import { PlayerAccountProvider } from './player/PlayerAccountProvider'
+import { PlayerGameplayProvider } from './gameplay/PlayerGameplayProvider'
 import './index.css'
 
 redirectDisabledFrontendRoute()
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppErrorBoundary>
       <AppAuthProvider>
         <PlayerAccountProvider>
-          <App />
+          <PlayerGameplayProvider>
+            <App />
+          </PlayerGameplayProvider>
         </PlayerAccountProvider>
       </AppAuthProvider>
     </AppErrorBoundary>

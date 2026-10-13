@@ -1,5 +1,5 @@
 import React from 'react'
-import { LiveRaceLeaderboard } from '../../components/LiveRaceLeaderboard/LiveRaceLeaderboard'
+import { PlayerGameplayPanel } from '../../components/Gameplay/PlayerGameplayPanel'
 import { BottomWidgets } from '../../components/NewLayout/BottomWidgets'
 import { OnTrackEventsCard } from '../../components/NewLayout/OnTrackEventsCard'
 import { RaceTrack } from '../../components/RaceTrack/RaceTrack'
@@ -33,7 +33,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       </div>
 
       <div className="nines-race-betting">
-        <LiveRaceLeaderboard />
+        <PlayerGameplayPanel />
       </div>
 
       {showResultsPanel && (

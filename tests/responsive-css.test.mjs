@@ -62,7 +62,7 @@ describe('portrait mobile responsive layout contract', () => {
   })
 
   it('keeps track, betting controls, header controls, and results mobile-safe', () => {
-    assert.match(desktopLayout, /<LiveRaceLeaderboard \/>/)
+    assert.match(desktopLayout, /<PlayerGameplayPanel \/>/)
     assert.doesNotMatch(desktopLayout, /BettingArea/)
     assert.doesNotMatch(mobileLayout, /MobileSelectionSheet/)
     assert.match(desktopLayout, /<OnTrackEventsCard \/>/)

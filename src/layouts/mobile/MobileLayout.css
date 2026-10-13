@@ -459,3 +459,4 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.nines-mobile-layout__gameplay{padding:0 12px 74px;min-height:0;overflow:auto}

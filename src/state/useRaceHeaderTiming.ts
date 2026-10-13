@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RaceStatus, useRaceStore } from './raceStore'
 
 export type RaceHeaderPhaseKey =
   | 'betsOpen'
@@ -105,6 +106,9 @@ export function getRaceHeaderTiming(now: Date = new Date()): RaceHeaderTiming {
 }
 
 export function useRaceHeaderTiming() {
+  const status = useRaceStore((state) => state.status)
+  const closesAt = useRaceStore((state) => state.betsCloseAtUtc)
+  const resultsVisibleUntil = useRaceStore((state) => state.resultsVisibleUntilUtc)
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -127,5 +131,25 @@ export function useRaceHeaderTiming() {
     }
   }, [])
 
-  return getRaceHeaderTiming(now)
+  if (status === RaceStatus.BETS_OPEN) {
+    const seconds = closesAt
+      ? Math.max(0, Math.ceil((Date.parse(closesAt) - now.getTime()) / 1000))
+      : 0
+    return { ...getRaceHeaderTiming(new Date('2000-01-01T00:00:00.000Z')),
+      timerValue: formatHeaderCountdown(seconds) }
+  }
+  if (status === RaceStatus.BETS_CLOSED) {
+    return getRaceHeaderTiming(new Date('2000-01-01T00:00:28.000Z'))
+  }
+  if (status === RaceStatus.RUNNING) {
+    return getRaceHeaderTiming(new Date('2000-01-01T00:00:35.000Z'))
+  }
+  if (status === RaceStatus.FINISHED || status === RaceStatus.RESULTS) {
+    const fallback = getRaceHeaderTiming(new Date('2000-01-01T00:00:52.000Z'))
+    const seconds = resultsVisibleUntil
+      ? Math.max(0, Math.ceil((Date.parse(resultsVisibleUntil) - now.getTime()) / 1000))
+      : 0
+    return { ...fallback, timerValue: formatHeaderCountdown(seconds) }
+  }
+  return getRaceHeaderTiming(new Date('2000-01-01T00:00:58.000Z'))
 }

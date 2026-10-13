@@ -14,6 +14,10 @@ export interface RaceCurrentResponse {
   endTime?: string
   finishLine?: number
   config?: Record<string, unknown>
+  phase?: 'idle' | 'countdown' | 'race_starting' | 'race_running' | 'race_finished' | 'results_showing'
+  bettingOpensAt?: string
+  bettingClosesAt?: string
+  entrants?: Array<{ id: string; name: string }>
   [key: string]: unknown
 }
 
